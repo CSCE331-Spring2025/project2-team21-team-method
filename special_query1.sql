@@ -1,0 +1,1 @@
+ select date_trunc('week',purchase_date) as week_start, count(order_id) as num_orders from customer_transaction group by week_start order by week_start;

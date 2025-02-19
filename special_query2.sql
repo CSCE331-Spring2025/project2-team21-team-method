@@ -1,0 +1,2 @@
+select extract('hour' from ct.purchase_date) as hour, count(order_id) as orders, sum(p.product_cost) as sales from customer_transaction ct
+join product p on ct.product_id = p.product_id group by hour order by hour;

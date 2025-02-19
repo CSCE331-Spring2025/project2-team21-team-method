@@ -1,0 +1,1 @@
+SELECT ice_amount, COUNT(ice_amount) FROM customer_transaction GROUP BY ice_amount ORDER BY COUNT(ice_amount) DESC;
