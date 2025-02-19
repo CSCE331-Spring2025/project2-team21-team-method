@@ -1,0 +1,11 @@
+employee_id,emp_email,emp_phone,is_manager,social_security,emp_pay,emp_bank_account
+1,jackieterrell@example.org,7763337873,False,306139975,84373.3,135518
+2,taylorkathy@example.org,2638281522,False,101322307,66659.02,353228
+3,christinewhite@example.net,1877491866,True,204346310,106482.6,515606
+4,lhumphrey@example.net,1618959963,True,865601628,75372.17,731762
+5,melissa24@example.org,6599591407,False,203743944,114160.53,726414
+6,brookschristopher@example.net,4014694370,True,806259201,73022.7,184988
+7,pobrien@example.net,5338531228,False,668965615,105683.9,246598
+8,emily98@example.net,1004231544,False,325006410,98929.64,402755
+9,zacharyyoung@example.com,3302791058,True,241017591,71774.47,455308
+10,wrightaudrey@example.com,2880016648,False,948510360,84734.1,778893
