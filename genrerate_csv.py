@@ -109,7 +109,7 @@ daily_purchases = transactions_df.groupby(["purchase_date", "product_id"]).size(
 daily_purchases = daily_purchases.sort_values(["product_id", "purchase_date"])
 daily_purchases["weekly_purchased"] = (
     daily_purchases.groupby("product_id")["daily_purchased"]
-    .rolling(window=7, min_periods=1).sum().reset_index(level=0, drop=True)
+    .rolling(window=7, min_periods=1).sum().reset_index(level=0, drop=True).astype(int)
 )
 
 # Summarize trends data
