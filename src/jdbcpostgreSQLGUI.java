@@ -47,8 +47,8 @@ public class jdbcpostgreSQLGUI {
     JPanel trendsPanel = new JPanel();
     tabsPane.addTab("Trends Page",trendsPanel);
 
-      JPanel employeePanel = new JPanel();
-      tabsPane.addTab("Employee Page",trendsPanel);
+    JPanel employeePanel = new JPanel();
+    tabsPane.addTab("Employee Page",employeePanel);
 
 
 
