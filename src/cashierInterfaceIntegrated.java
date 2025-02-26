@@ -12,10 +12,8 @@ import java.util.Map;
 /**
  * (Phase 3) TODO:
  * Check INSERT INTO customer_transaction.
- * Need to allow null or customer_id members. It spits the sh#t below
- *
- * "Error processing transaction: Batch entry 0 INSERT INTO customer_transaction(customer_transaction_num, order_id, product_id, customer_id, purchase_date, ice_amount, topping_type) VALUES (87899, 1, 4, 1, '2025-2-25 23:05:47.732787-06', 1.0, ") was aborted: ERROR: Insert or update on table "customer_transaction" violates foreign key constraint "customer_transaction_customer_id_fkey"
- * Detail: Key (customer_id)=(1) is not present in table "customer_reward". Call getNextException to see other errors in the batch.
+ * Morph the restrictions of line 264/265 based on values we already have in db
+ * Add 0 to customer_id for default value if they didn't want to record their order
  *
  * (Phase 4) TODO:
  * BEAUTIFY THE DAMN THING
@@ -265,7 +263,7 @@ public class cashierInterfaceIntegrated {
 
             int productId = getProductIdByName(currentDrink);  // Implement this method
             int orderId = 1;  // Get from the current session/order
-            int customerId = 1;  // Get from the session/customer login
+            int customerId = 1001;  // Get from the session/customer login
             Timestamp purchaseDate = Timestamp.from(Instant.now());
 
             addItemToTransaction(productId, orderId, customerId, purchaseDate, iceAmount, toppingType);
