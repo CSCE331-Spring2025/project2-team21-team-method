@@ -8,6 +8,8 @@ import javax.swing.table.DefaultTableModel;
 import java.util.ArrayList;
 import java.util.List;
 
+/* TODO: FULLY INTEGRATE "cashierInterface.java" WITH "CashierDashboard.java" */
+
 public class CashierDashboard {
     private static Connection conn = null;
     private static DefaultTableModel currentTransactionModel;
