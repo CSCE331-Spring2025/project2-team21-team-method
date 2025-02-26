@@ -310,128 +310,138 @@ public class jdbcpostgreSQLGUI {
 
   //
     // AVI CHANGE FROM THE PART BELOW
-    ///
+    //int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account
 
-    private static void buildEmployeePanel(Connection conn, JPanel orderPanel) {
-        DefaultTableModel inventoryTableModel = new DefaultTableModel(new String [] {"Item ID","Item Name", "Amount Left"},0);
-        JTable inventoryTable = new JTable(inventoryTableModel);
-        JScrollPane inventoryTableScrollPane = new JScrollPane(inventoryTable);
+    private static void buildEmployeePanel(Connection conn, JPanel employeePanel) {
+        DefaultTableModel employeeTableModel = new DefaultTableModel(
+                new String[] {"Employee ID", "Employee Email", "Employee Phone", "Is Manager", "Social Security", "Employee Pay", "Bank Account"}, 0
+        );
 
-        buildInventoryTable(conn, inventoryTableModel);
+        JTable employeeTable = new JTable(employeeTableModel);
+        JScrollPane employeeTableScrollPane = new JScrollPane(employeeTable);
 
+        // Populate table with employee data
+        buildEmployeeTable(conn, employeeTableModel);
 
-        // creating an area wehre the manager can add update and delete items
+        // Creating an area where the manager can add, update, and delete employees
+        JPanel modifyEmployeePanel = new JPanel(new FlowLayout());
 
-        JPanel modifyItemsPanel = new JPanel(new FlowLayout());
-        JTextField id = new JTextField(3);
-        JTextField name = new JTextField(20);
-        JTextField amount = new JTextField(5);
-        JTextField transactionId = new JTextField(20);
+        // Input fields for employee details
+        JTextField employeeIdField = new JTextField(5);
+        JTextField emailField = new JTextField(20);
+        JTextField phoneField = new JTextField(10);
+        JCheckBox isManagerCheck = new JCheckBox("Manager");
+        JTextField socialSecurityField = new JTextField(10);
+        JTextField payField = new JTextField(10);
+        JTextField bankAccountField = new JTextField(10);
 
-        modifyItemsPanel.add(new JLabel("Item ID"));
-        modifyItemsPanel.add(id);
+        // Adding labels and fields to the panel
+        modifyEmployeePanel.add(new JLabel("Employee ID:"));
+        modifyEmployeePanel.add(employeeIdField);
 
-        modifyItemsPanel.add(new JLabel("Item name"));
-        modifyItemsPanel.add(name);
+        modifyEmployeePanel.add(new JLabel("Email:"));
+        modifyEmployeePanel.add(emailField);
 
-        modifyItemsPanel.add(new JLabel("Item amount"));
-        modifyItemsPanel.add(amount);
+        modifyEmployeePanel.add(new JLabel("Phone:"));
+        modifyEmployeePanel.add(phoneField);
 
-        modifyItemsPanel.add(new JLabel("Transaction Number"));
-        modifyItemsPanel.add(transactionId);
+        modifyEmployeePanel.add(new JLabel("Social Security:"));
+        modifyEmployeePanel.add(socialSecurityField);
 
+        modifyEmployeePanel.add(new JLabel("Pay:"));
+        modifyEmployeePanel.add(payField);
 
+        modifyEmployeePanel.add(new JLabel("Bank Account:"));
+        modifyEmployeePanel.add(bankAccountField);
+
+        modifyEmployeePanel.add(isManagerCheck);
+
+        // ADD Button
         JButton addButton = new JButton("ADD");
-        addButton.addActionListener(new ActionListener(){
+        addButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e){
-                String temp_id = id.getText().trim();
-                String temp_name = name.getText().trim();
-                String temp_amount = amount.getText().trim();
-                String temp_transactionId= transactionId.getText().trim();
-                if (temp_id.isEmpty() || temp_name.isEmpty() || temp_amount.isEmpty() || temp_transactionId.isEmpty()  ) {
-                    JOptionPane.showMessageDialog(null, "Please fill all fields (Id, Name, Amount, Transaction ID).");
+            public void actionPerformed(ActionEvent e) {
+                String tempId = employeeIdField.getText().trim();
+                String tempEmail = emailField.getText().trim();
+                String tempPhone = phoneField.getText().trim();
+                String tempSSN = socialSecurityField.getText().trim();
+                String tempPay = payField.getText().trim();
+                String tempBankAccount = bankAccountField.getText().trim();
+                boolean isManager = isManagerCheck.isSelected();
+
+                if (tempId.isEmpty() || tempEmail.isEmpty() || tempPhone.isEmpty() || tempSSN.isEmpty() || tempPay.isEmpty() || tempBankAccount.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Please fill all fields.");
                     return;
                 }
-                int num_id = Integer.parseInt(temp_id);
-                int num_amount = Integer.parseInt(temp_amount);
-                int num_transactionId = Integer.parseInt(temp_transactionId);
 
-                // should I add checks for empty and value checking ?
+                int employeeId = Integer.parseInt(tempId);
+                int empPhone = Integer.parseInt(tempPhone);
+                int socialSecurity = Integer.parseInt(tempSSN);
+                double empPay = Double.parseDouble(tempPay);
+                int empBankAccount = Integer.parseInt(tempBankAccount);
 
-                insertValueIntoDatabase(conn,num_id,temp_name,num_amount,num_transactionId);
-                buildInventoryTable(conn, inventoryTableModel);
+                insertEmpIntoDatabase(conn, employeeId, tempEmail, empPhone, isManager, socialSecurity, empPay, empBankAccount);
+                buildEmployeeTable(conn, employeeTableModel);
             }
         });
-        modifyItemsPanel.add(addButton);
+        modifyEmployeePanel.add(addButton);
+
 
         JButton updateButton = new JButton("UPDATE");
-        updateButton.addActionListener(new ActionListener(){
+        updateButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e){
-                String temp_id = id.getText().trim();
-                String temp_name = name.getText().trim();
-                String temp_amount = amount.getText().trim();
-                String temp_transactionId= transactionId.getText().trim();
-                if (temp_id.isEmpty()){
-                    JOptionPane.showMessageDialog(null, "Please the ID field.");
+            public void actionPerformed(ActionEvent e) {
+                String tempId = employeeIdField.getText().trim();
+                String tempEmail = emailField.getText().trim();
+                String tempPhone = phoneField.getText().trim();
+                String tempSSN = socialSecurityField.getText().trim();
+                String tempPay = payField.getText().trim();
+                String tempBankAccount = bankAccountField.getText().trim();
+                boolean isManager = isManagerCheck.isSelected();
+
+                if (tempId.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Please enter the Employee ID.");
                     return;
                 }
-                int num_id = Integer.parseInt(temp_id);
-                int num_amount= -1;
-                int num_transactionId=-1;
-                if(!temp_amount.isEmpty()){
-                    num_amount = Integer.parseInt(temp_amount);
-                }
-                if(!temp_transactionId.isEmpty()){
-                    num_transactionId = Integer.parseInt(temp_transactionId);
-                }
-                // should I add checks for empty and value checking ?
-                updateValueIntoDatabase(conn,num_id,temp_name,num_amount,num_transactionId);
-                buildInventoryTable(conn, inventoryTableModel);
-                //buildInventoryTable(conn, inventoryTableModel);
+
+                int employeeId = Integer.parseInt(tempId);
+                int empPhone = tempPhone.isEmpty() ? -1 : Integer.parseInt(tempPhone);
+                int socialSecurity = tempSSN.isEmpty() ? -1 : Integer.parseInt(tempSSN);
+                double empPay = tempPay.isEmpty() ? -1.0 : Double.parseDouble(tempPay);
+                int empBankAccount = tempBankAccount.isEmpty() ? -1 : Integer.parseInt(tempBankAccount);
+
+                updateEmpIntoDatabase(conn, employeeId, tempEmail, empPhone, isManager, socialSecurity, empPay, empBankAccount);
+                buildEmployeeTable(conn, employeeTableModel);
             }
         });
-        modifyItemsPanel.add(updateButton);
+        modifyEmployeePanel.add(updateButton);
 
 
         JButton deleteButton = new JButton("DELETE");
-        deleteButton.addActionListener(new ActionListener(){
+        deleteButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e){
-                String temp_id = id.getText().trim();
-                String temp_name = name.getText().trim();
-                String temp_amount = amount.getText().trim();
-                String temp_transactionId= transactionId.getText().trim();
-                if (temp_id.isEmpty()){
-                    JOptionPane.showMessageDialog(null, "Please the ID field.");
+            public void actionPerformed(ActionEvent e) {
+                String tempId = employeeIdField.getText().trim();
+                if (tempId.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Please enter the Employee ID.");
                     return;
                 }
-                int num_id = Integer.parseInt(temp_id);
-                int num_amount;
-                int num_transactionId;
-                if(!temp_amount.isEmpty()){
-                    num_amount = Integer.parseInt(temp_amount);
-                }
-                if(!temp_transactionId.isEmpty()){
-                    num_transactionId = Integer.parseInt(temp_transactionId);
-                }
 
-                // should I add checks for empty and value checking ?
-                deleteValueIntoDatabase(conn,num_id);
-                buildInventoryTable(conn, inventoryTableModel);
+                int employeeId = Integer.parseInt(tempId);
+                deleteEmpIntoDatabase(conn, employeeId);
+                buildEmployeeTable(conn, employeeTableModel);
             }
         });
-        modifyItemsPanel.add(deleteButton);
+        modifyEmployeePanel.add(deleteButton);
 
-        orderPanel.add(inventoryTableScrollPane, BorderLayout.CENTER);
-        orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
+        // Adding components to the Employee Panel
+        employeePanel.add(employeeTableScrollPane, BorderLayout.CENTER);
+        employeePanel.add(modifyEmployeePanel, BorderLayout.SOUTH);
     }
-
     //modify this part
-    private static void buildEmployeeTable(Connection conn, DefaultTableModel inventoryTableModel){
-        inventoryTableModel.setRowCount(0);
-        String query = "SELECT item_id, item_name, amount FROM inventory";
+    private static void buildEmployeeTable(Connection conn, DefaultTableModel employeeTableModel){
+        employeeTableModel.setRowCount(0);
+        String query = "SELECT employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employees";
         String id;
         String name;
         String amount;
@@ -443,11 +453,11 @@ public class jdbcpostgreSQLGUI {
                 amount = String.valueOf(rs.getInt(3));
 
                 String [] temp_row = new String[]{id, name , amount};
-                inventoryTableModel.addRow(temp_row);
+                employeeTableModel.addRow(temp_row);
             }
         }
         catch(SQLException e){
-            JOptionPane.showMessageDialog(null, "Error laoding the inventory table");
+            JOptionPane.showMessageDialog(null, "Error laoding the employee table");
         }
     }
 
@@ -455,7 +465,8 @@ public class jdbcpostgreSQLGUI {
     private static void insertEmpIntoDatabase(Connection conn, int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account){
         try(
                 PreparedStatement ps = conn.prepareStatement(
-                        "insert into inventory(item_id, item_name, amount,transaction_id) values (?,?,?,?)"
+                        "INSERT INTO employees (employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account) VALUES (?, ?, ?, ?, ?, ?, ?)"
+
                 )){
 
             ps.setInt(1, employee_id);
@@ -477,7 +488,9 @@ public class jdbcpostgreSQLGUI {
     private static void updateEmpIntoDatabase(Connection conn, int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account)
     {
 
-        String query = "SELECT  item_name, amount,transaction_id FROM inventory where item_id = ?";
+        //String query = "SELECT  item_name, amount,transaction_id FROM inventory where item_id = ?";
+        String query = "SELECT emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employees WHERE employee_id = ?";
+
 
         String prev_emp_email = "";
         int prev_employee_id=-1;
@@ -504,7 +517,7 @@ public class jdbcpostgreSQLGUI {
                 }
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error loading the inventory table: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error loading the employee table: " + e.getMessage());
         }
         if (emp_email.isEmpty()){
             emp_email = prev_emp_email;
@@ -533,7 +546,7 @@ public class jdbcpostgreSQLGUI {
 
         try(
                 PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE inventory SET item_name = ?, amount = ?, transaction_id = ? WHERE item_id = ?"
+                        "UPDATE employees SET emp_email = ?, emp_phone = ?, is_manager = ?, social_security = ?, emp_pay = ?, emp_bank_account = ? WHERE employee_id = ?"
                 )){
 
             ps.setString(1, emp_email);
@@ -547,19 +560,19 @@ public class jdbcpostgreSQLGUI {
             JOptionPane.showMessageDialog(null, " Item updated successfully");
         }
         catch(SQLException e){
-            JOptionPane.showMessageDialog(null, "Error updating inventory item: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error updating employee item: " + e.getMessage());
         }
     }
 
     //modify this part
-    private static void deleteEmpIntoDatabase(Connection conn, int id){
+    private static void deleteEmpIntoDatabase(Connection conn, int employee_id){
         // we need ti check if the value exists in menu_items_inventory as well adn delte form there as well
         try(
                 PreparedStatement ps = conn.prepareStatement(
                         "DELETE FROM inventory WHERE item_id = ?"
                 )){
 
-            ps.setInt(1, id);
+            ps.setInt(1, employee_id);
             //ps.setString(2, name);
             //ps.setInt(3, amount);
             //ps.setInt(4, transactionId);
