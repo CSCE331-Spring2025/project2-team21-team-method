@@ -1,5 +1,4 @@
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import javax.swing.*;
@@ -33,7 +32,7 @@ public class jdbcpostgreSQLGUI {
     JFrame managerDashboard = new JFrame("Manager Dashboard");
 
     managerDashboard.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    managerDashboard.setSize(600,400);
+    managerDashboard.setSize(800,400);
 
     JTabbedPane tabsPane = new JTabbedPane();
 
@@ -309,7 +308,7 @@ public class jdbcpostgreSQLGUI {
 
 
   //
-    // AVI CHANGE FROM THE PART BELOW
+    // AVI CHANGE FROM THE PART BELOWemployeeTableScrollPane.setPreferredSize(new Dimension(700, 200));
     //int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account
 
     private static void buildEmployeePanel(Connection conn, JPanel employeePanel) {
@@ -319,12 +318,15 @@ public class jdbcpostgreSQLGUI {
 
         JTable employeeTable = new JTable(employeeTableModel);
         JScrollPane employeeTableScrollPane = new JScrollPane(employeeTable);
+        employeeTableScrollPane.setPreferredSize(new Dimension(800, 200));
+
 
         // Populate table with employee data
         buildEmployeeTable(conn, employeeTableModel);
 
         // Creating an area where the manager can add, update, and delete employees
         JPanel modifyEmployeePanel = new JPanel(new FlowLayout());
+
 
         // Input fields for employee details
         JTextField employeeIdField = new JTextField(5);
@@ -441,23 +443,37 @@ public class jdbcpostgreSQLGUI {
     //modify this part
     private static void buildEmployeeTable(Connection conn, DefaultTableModel employeeTableModel){
         employeeTableModel.setRowCount(0);
-        String query = "SELECT employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employees";
-        String id;
-        String name;
-        String amount;
-        try(Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(query)){
-            while(rs.next()){
-                id = String.valueOf(rs.getInt(1));
-                name = rs.getString(2);
-                amount = String.valueOf(rs.getInt(3));
+        String query = "SELECT employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employee";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                // Retrieve and convert each column to a String
 
-                String [] temp_row = new String[]{id, name , amount};
-                employeeTableModel.addRow(temp_row);
+                String employeeId = String.valueOf(rs.getInt(1));
+                String empEmail = rs.getString(2);
+                String empPhone = String.valueOf(rs.getLong(3));
+                String isManager = String.valueOf(rs.getBoolean(4));
+                String socialSecurity = String.valueOf(rs.getLong(5));
+                String empPay = String.valueOf(rs.getDouble(6));
+                String empBankAccount = String.valueOf(rs.getInt(7));
+
+                // Create an array with all string values
+                String[] tempRow = new String[] {
+                        employeeId,
+                        empEmail,
+                        empPhone,
+                        isManager,
+                        socialSecurity,
+                        empPay,
+                        empBankAccount
+                };
+
+                // Add the row to your table model
+                employeeTableModel.addRow(tempRow);
             }
         }
         catch(SQLException e){
-            JOptionPane.showMessageDialog(null, "Error laoding the employee table");
+            JOptionPane.showMessageDialog(null, "Error laoding the employee table"+e.getMessage());
         }
     }
 
@@ -465,7 +481,7 @@ public class jdbcpostgreSQLGUI {
     private static void insertEmpIntoDatabase(Connection conn, int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account){
         try(
                 PreparedStatement ps = conn.prepareStatement(
-                        "INSERT INTO employees (employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                        "INSERT INTO employee (employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account) VALUES (?, ?, ?, ?, ?, ?, ?)"
 
                 )){
 
@@ -489,7 +505,7 @@ public class jdbcpostgreSQLGUI {
     {
 
         //String query = "SELECT  item_name, amount,transaction_id FROM inventory where item_id = ?";
-        String query = "SELECT emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employees WHERE employee_id = ?";
+        String query = "SELECT emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employee WHERE employee_id = ?";
 
 
         String prev_emp_email = "";
@@ -546,7 +562,7 @@ public class jdbcpostgreSQLGUI {
 
         try(
                 PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE employees SET emp_email = ?, emp_phone = ?, is_manager = ?, social_security = ?, emp_pay = ?, emp_bank_account = ? WHERE employee_id = ?"
+                        "UPDATE employee SET emp_email = ?, emp_phone = ?, is_manager = ?, social_security = ?, emp_pay = ?, emp_bank_account = ? WHERE employee_id = ?"
                 )){
 
             ps.setString(1, emp_email);
