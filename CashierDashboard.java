@@ -51,20 +51,33 @@ public class CashierDashboard {
         JButton payButton = new JButton("Pay");
         sidebarPanel.add(payButton, BorderLayout.SOUTH);
 
+
+
+        ////////////////////////////////////// MAIN CONTENT SECTION ///////////////////////////////////
+        // TODO: integrate your main content section here. 
+        // TODO: make sure the button on main section links to adding items into sidebar
+
         // Main Content Panel (Right)
         JPanel mainPanel = new JPanel(new BorderLayout());
         JLabel placeholder = new JLabel("Main Screen", SwingConstants.CENTER);
         placeholder.setFont(new Font("Arial", Font.BOLD, 18));
 
-        // Button to Add a Test Item ***
+        
+        // Button to Add a Test Item *** HARDCODED, MANUAL TESTING (TODO - REMOVE THIS TEST BUTTON AND ADD MAIN SECTION)
         JButton testItemButton = new JButton("Add Test Item");
         testItemButton.setFont(new Font("Arial", Font.BOLD, 14));
 
-        // Add action listener to simulate adding an item (HARDCODED, MANUAL TESTING)
+        // Add action listener to simulate adding an item (HARDCODED, MANUAL TESTING) TODO - REMOVE THIS TEST BUTTON AND ADD MAIN SECTION
         testItemButton.addActionListener(e -> {
             Timestamp purchaseDate = Timestamp.valueOf("2024-02-25 14:30:00");
             addItemToTransaction(16, 12345, 1001, purchaseDate, 0.5, "Red Bean");
         });
+
+
+
+
+
+        ////////////////////////////////////// MAIN CONTENT SECTION ///////////////////////////////////
         
 
         mainPanel.add(placeholder, BorderLayout.NORTH);
@@ -140,16 +153,16 @@ public class CashierDashboard {
         }
     
         try {
-            // ✅ Step 1: Get the latest transaction number
+            // Get the latest transaction number
             int nextTransactionNum = getNextTransactionNumber();
     
-            // ✅ Step 2: Prepare the INSERT query
+            // Prepare the INSERT query
             String query = "INSERT INTO customer_transaction (customer_transaction_num, order_id, product_id, customer_id, purchase_date, ice_amount, topping_type) "
                          + "VALUES (?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement ps = conn.prepareStatement(query);
     
             for (TransactionData transaction : currentTransactionList) {
-                ps.setInt(1, nextTransactionNum++);  // ✅ Use manually generated transaction number
+                ps.setInt(1, nextTransactionNum++);  // Use manually generated transaction number
                 ps.setInt(2, transaction.orderId);
                 ps.setInt(3, transaction.productId);
                 ps.setInt(4, transaction.customerId);
@@ -162,7 +175,7 @@ public class CashierDashboard {
             ps.executeBatch();
             JOptionPane.showMessageDialog(null, "Transaction completed!");
     
-            // ✅ Clear transaction list & UI
+            // Clear transaction list & UI
             currentTransactionModel.setRowCount(0);
             currentTransactionList.clear();
     
