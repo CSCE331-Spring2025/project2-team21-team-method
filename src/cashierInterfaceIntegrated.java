@@ -21,6 +21,10 @@ import java.util.Random;
  * (3) MAKE LAST SECOND CUSTOMIZATION POSSIBLE THROUGH CURRENT ORDER TAB
  *
  * (4) Implement inventory deduction after customization panel
+ *
+ * (5) Add a interface for the total price of all (custom) drink at the bottom and have each drink
+ * show its price instead of purchase date
+ *   - make sure that price is on the very left
  * */
 
 public class cashierInterfaceIntegrated {
