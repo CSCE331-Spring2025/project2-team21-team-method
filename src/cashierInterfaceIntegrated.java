@@ -27,7 +27,13 @@ import java.util.Random;
  *   - make sure that price is on the very left
  * 
  * (6) check and fix if needed: toppingType null case (NONE or '')?
- * 
+ *
+ * (7) Add like 2 or 3 out of the follow for phase (4) features:
+ *   - sales
+ *   - returns
+ *   - voids
+ *   - discards
+ *   - payment methods
  * */
 
 public class cashierInterfaceIntegrated {
