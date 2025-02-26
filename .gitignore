@@ -1,0 +1,14 @@
+# Ignore compiled Java class files and Java jar related files
+*.class
+*.jar
+
+
+# Ignore database setup file (HAS CREDENTIALS)
+dbSetup.java
+
+# Ignore IDE-specific files
+*.log
+*.swp
+.vscode/
+.idea/
+*.iml
