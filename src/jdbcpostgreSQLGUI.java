@@ -428,6 +428,7 @@ public class jdbcpostgreSQLGUI {
         orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
     }
 
+    //modify this part
     private static void buildEmployeeTable(Connection conn, DefaultTableModel inventoryTableModel){
         inventoryTableModel.setRowCount(0);
         String query = "SELECT item_id, item_name, amount FROM inventory";
@@ -449,16 +450,21 @@ public class jdbcpostgreSQLGUI {
             JOptionPane.showMessageDialog(null, "Error laoding the inventory table");
         }
     }
-    private static void insertEmpIntoDatabase(Connection conn, int id, String name, int amount, int transactionId){
+
+    //Modify this part
+    private static void insertEmpIntoDatabase(Connection conn, int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account){
         try(
                 PreparedStatement ps = conn.prepareStatement(
                         "insert into inventory(item_id, item_name, amount,transaction_id) values (?,?,?,?)"
                 )){
 
-            ps.setInt(1, id);
-            ps.setString(2, name);
-            ps.setInt(3, amount);
-            ps.setInt(4, transactionId);
+            ps.setInt(1, employee_id);
+            ps.setString(2, emp_email);
+            ps.setInt(3, emp_phone);
+            ps.setBoolean(4, is_manager);
+            ps.setInt(5, social_security);
+            ps.setDouble(6, emp_pay);
+            ps.setInt(7, emp_bank_account);
             ps.execute();
             JOptionPane.showMessageDialog(null, " Item adding successfully");
         }
@@ -466,47 +472,77 @@ public class jdbcpostgreSQLGUI {
             JOptionPane.showMessageDialog(null, "Error adding inventory item: " + e.getMessage());
         }
     }
-    private static void updateEmpIntoDatabase(Connection conn, int id, String name, int amount, int transactionId){
+
+    //Modify this part
+    private static void updateEmpIntoDatabase(Connection conn, int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account)
+    {
 
         String query = "SELECT  item_name, amount,transaction_id FROM inventory where item_id = ?";
 
-        String prev_name="";
-        int prev_amount=-1;
-        int prev_transaction=-1;
+        String prev_emp_email = "";
+        int prev_employee_id=-1;
+        int prev_emp_phone=-1;
+        boolean prev_is_manager = false;
+        int prev_social_security = -1;
+        double prev_emp_pay = -1.0;
+        int prev_emp_back_account = -1;
         try(PreparedStatement ps = conn.prepareStatement(query)){
-            ps.setInt(1, id);
+            ps.setInt(1, employee_id);
 
             try(ResultSet rs = ps.executeQuery()){
                 if(rs.next()){
-                    prev_name = rs.getString(1);
-                    prev_amount = rs.getInt(2);
-                    prev_transaction = rs.getInt(3);
+                    prev_emp_email = rs.getString(1);
+                    prev_employee_id = rs.getInt(2);
+                    prev_emp_phone = rs.getInt(3);
+                    prev_is_manager = rs.getBoolean(4);
+                    prev_social_security = rs.getInt(5);
+                    prev_emp_pay = rs.getDouble(6);
+                    prev_emp_back_account = rs.getInt(7);
                 }
                 else{
-                    JOptionPane.showMessageDialog(null, "No item found with ID: " + id);
+                    JOptionPane.showMessageDialog(null, "No item found with ID: " + employee_id);
                 }
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error loading the inventory table: " + e.getMessage());
         }
-        if (name.isEmpty()){
-            name = prev_name;
+        if (emp_email.isEmpty()){
+            emp_email = prev_emp_email;
         }
-        if(amount ==-1){
-            amount = prev_amount;
+        if(employee_id ==-1){
+            employee_id = prev_employee_id;
         }
-        if(transactionId == -1){
-            transactionId = prev_transaction;
+        if(emp_phone == -1) {
+            emp_phone = prev_emp_phone;
         }
+        if(is_manager == false){
+            is_manager = prev_is_manager;
+        }
+        if(social_security == -1)
+        {
+            social_security = prev_social_security;
+        }
+        if(emp_pay == -1.0)
+        {
+            emp_pay = prev_emp_pay;
+        }
+        if(emp_bank_account == -1)
+        {
+            emp_bank_account = prev_emp_back_account;
+        }
+
         try(
                 PreparedStatement ps = conn.prepareStatement(
                         "UPDATE inventory SET item_name = ?, amount = ?, transaction_id = ? WHERE item_id = ?"
                 )){
 
-            ps.setString(1, name);
-            ps.setInt(2, amount);
-            ps.setInt(3, transactionId);
-            ps.setInt(4, id);
+            ps.setString(1, emp_email);
+            ps.setInt(2, emp_phone);
+            ps.setBoolean(3, is_manager);
+            ps.setInt(4, social_security);
+            ps.setDouble(5, emp_pay);
+            ps.setInt(6, emp_bank_account);
+            ps.setInt(7, employee_id);
             ps.executeUpdate();
             JOptionPane.showMessageDialog(null, " Item updated successfully");
         }
@@ -515,7 +551,7 @@ public class jdbcpostgreSQLGUI {
         }
     }
 
-
+    //modify this part
     private static void deleteEmpIntoDatabase(Connection conn, int id){
         // we need ti check if the value exists in menu_items_inventory as well adn delte form there as well
         try(
