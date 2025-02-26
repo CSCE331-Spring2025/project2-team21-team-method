@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
- * (Phase 3) TODO:
- * Check INSERT INTO customer_transaction.
- * Morph the restrictions of line 264/265 based on values we already have in db
- * Add 0 to customer_id for default value if they didn't want to record their order
+ * (Phase 4) TODO:
+ * Rewards Button
+ *   - be sure to first setLoggedInCustomerId (Line 413) then update their rewards
  *
  * (Phase 4) TODO:
  * BEAUTIFY THE DAMN THING
@@ -26,6 +26,7 @@ public class cashierInterfaceIntegrated {
     private static Connection conn = null;
     private static DefaultTableModel currentTransactionModel;
     private static List<TransactionData> currentTransactionList = new ArrayList<>();
+    private static int loggedInCustomerId = -1;
 
     private static JPanel mainPanel2;
     private static JPanel selectPanel;
@@ -47,7 +48,7 @@ public class cashierInterfaceIntegrated {
 
         // Create Main Frame
         JFrame cashierDashboard = new JFrame("Cashier Dashboard");
-        cashierDashboard.setSize(800, 600);
+        cashierDashboard.setSize(1000, 600);
         cashierDashboard.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         cashierDashboard.setLayout(new BorderLayout());
 
@@ -262,8 +263,8 @@ public class cashierInterfaceIntegrated {
             JOptionPane.showMessageDialog(null, orderSummary.toString());
 
             int productId = getProductIdByName(currentDrink);  // Implement this method
-            int orderId = 1;  // Get from the current session/order
-            int customerId = 1001;  // Get from the session/customer login
+            int orderId = generateOrderId();  // Get from the current session/order
+            int customerId = getCustomerId();  // Get from the session/customer login
             Timestamp purchaseDate = Timestamp.from(Instant.now());
 
             addItemToTransaction(productId, orderId, customerId, purchaseDate, iceAmount, toppingType);
@@ -401,5 +402,20 @@ public class cashierInterfaceIntegrated {
             System.err.println("Error fetching product name: " + e.getMessage());
         }
         return productName;
+    }
+
+    private static int generateOrderId() {
+        return 10000 + new Random().nextInt(90000);
+    }
+
+    /**
+     * TODO:
+     * When setting up customer_rewards, be sure to use setLoggedInCustomerId */
+    public static void setLoggedInCustomerId(int customerId) {
+        loggedInCustomerId = customerId;
+    }
+
+    private static int getCustomerId() {
+        return loggedInCustomerId != -1 ? loggedInCustomerId : 0;
     }
 }
