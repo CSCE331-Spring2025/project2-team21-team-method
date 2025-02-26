@@ -25,6 +25,9 @@ import java.util.Random;
  * (5) Add a interface for the total price of all (custom) drink at the bottom and have each drink
  * show its price instead of purchase date
  *   - make sure that price is on the very left
+ * 
+ * (6) check and fix if needed: toppingType null case (NONE or '')?
+ * 
  * */
 
 public class cashierInterfaceIntegrated {
