@@ -4,8 +4,6 @@ import java.sql.*;
 import javax.swing.*;
 import java.util.*;
 
-/* TODO (LINE 82): IF AN ORDER IS CONFIRMED, TAKE THE PANEL BACK TO MAIN MENU */
-
 public class cashierInterface {
 
     private static Connection conn = null;
@@ -81,7 +79,6 @@ public class cashierInterface {
     }
 
     /* Once drink has been selected, customization (milk & type, sugar & type, ice) */
-    /* TODO: if an order is confirmed, take it back to the main menu*/
     private static void showCustomizeDrink(String drink) {
         customizePanel.removeAll();
         currentDrink = drink;
@@ -94,16 +91,43 @@ public class cashierInterface {
         gbc.gridy++;
 
         ArrayList<String[]> customOptions = getCustomizeOptions();
+
+        /* dynamically store custom options and map it to its text field */
+        HashMap<String, JTextField> inputFields = new HashMap<>();
+
         for (String[] option : customOptions) {
             gbc.gridx = 0;
             customizePanel.add(new JLabel(option[0] + " (Available: " + option[1] + ")"), gbc);
             gbc.gridx = 1;
-            customizePanel.add(new JTextField(5), gbc);
+
+            JTextField inputField = new JTextField(5);
+            customizePanel.add(inputField, gbc);
+            inputFields.put(option[0], inputField);
             gbc.gridy++;
         }
 
+        /* Retrieving and process only non-empty string into pop-up */
         JButton confirmButton = new JButton("Confirm Selection");
-        confirmButton.addActionListener(e -> JOptionPane.showMessageDialog(null, "Order placed: " + currentDrink));
+        confirmButton.addActionListener(e -> {
+            StringBuilder orderSummary = new StringBuilder("Order placed: " + currentDrink + "\n");
+
+            boolean hasCustomizations = false;
+            for (Map.Entry<String, JTextField> entry : inputFields.entrySet()) {
+                String optionName = entry.getKey();
+                String value = entry.getValue().getText().trim();
+
+                if (!value.isEmpty() && !value.equals("0")) {
+                    orderSummary.append(optionName).append(": ").append(value).append("\n");
+                    hasCustomizations = true;
+                }
+            }
+            if (!hasCustomizations) {
+                orderSummary.append("No customizations.");
+            }
+            JOptionPane.showMessageDialog(null, orderSummary.toString());
+
+            panelSwitcher.show(mainPanel, "General Drinks");
+        });
         gbc.gridx = 0;
         gbc.gridy++;
         customizePanel.add(confirmButton, gbc);
@@ -112,7 +136,6 @@ public class cashierInterface {
         customizePanel.revalidate();
         customizePanel.repaint();
         panelSwitcher.show(mainPanel, "Customize Drink");
-
     }
 
     private static void addBackButton(JPanel panel, String previousPanel) {
