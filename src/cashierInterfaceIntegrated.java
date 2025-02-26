@@ -12,15 +12,16 @@ import java.util.Random;
 
 /**
  * (Phase 4) TODO:
- * Rewards Button
+ * (1) Rewards Button
  *   - be sure to first setLoggedInCustomerId (Line 413) then update their rewards
  *
- * (Phase 4) TODO:
- * BEAUTIFY THE DAMN THING
+ * (2) BEAUTIFY THE DAMN THING
  *   - add pictures to the drinks and stuff
  *
- * (Phase 4) TODO:
- * MAKE LAST SECOND CUSTOMIZATION POSSIBLE THROUGH CURRENT ORDER TAB */
+ * (3) MAKE LAST SECOND CUSTOMIZATION POSSIBLE THROUGH CURRENT ORDER TAB
+ *
+ * (4) Implement inventory deduction after customization panel
+ * */
 
 public class cashierInterfaceIntegrated {
     private static Connection conn = null;
