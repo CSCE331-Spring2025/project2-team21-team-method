@@ -1,0 +1,50 @@
+### Explanation of the Error and Fixes
+
+#### What Was Causing the Segmentation Fault?
+1. **Incorrect Argument Handling**
+   - The original code checked if `argc != 2` but only printed a message and did not `exit()`.  
+   - If `argc < 2`, `argv[1]` remains **undefined**, causing `opendir(argv[1])` to access an invalid memory address.
+
+2. **No Check for `opendir()` Failure**
+   - If `opendir(argv[1])` fails (e.g., directory doesn’t exist), `dp` becomes `NULL`.
+   - The next call to `readdir(dp)` **dereferences `NULL`**, causing a **segmentation fault**.
+
+#### Fixes Made
+1. **Proper Argument Validation**
+   ```c
+   if (argc != 2) {
+       fprintf(stderr, "Usage: %s <directory_name>\n", argv[0]);
+       exit(1);
+   }
+   ```
+   - Now, if no argument is provided, the program **exits** instead of continuing with `argv[1]` as an invalid pointer.
+
+2. **Checking `opendir()` Return Value**
+   ```c
+   if ((dp = opendir(argv[1])) == NULL) {
+       perror("Error opening directory");
+       exit(1);
+   }
+   ```
+   - If `opendir()` fails, we now exit immediately instead of passing `NULL` to `readdir()`.
+
+#### What the Program Does
+1. Takes a directory name as a command-line argument.
+2. Opens the directory for reading.
+3. Iterates through all files and subdirectories inside it.
+4. Prints each filename to standard output (`stdout`).
+5. Closes the directory and exits.
+
+#### Saving Output to a File
+If you want to save the directory listing to a text file, you can redirect output:
+```bash
+./a.out mydirectory > output.txt
+```
+Now, `output.txt` will contain:
+```
+.
+..
+file1.txt
+file2.txt
+subdir
+```

@@ -501,16 +501,16 @@ public class jdbcpostgreSQLGUI {
     }
 
     //Modify this part
-    private static void updateEmpIntoDatabase(Connection conn, int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account)
+    private static void updateEmpIntoDatabase(Connection conn, int employee_id, String emp_email, long emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account)
     {
 
         //String query = "SELECT  item_name, amount,transaction_id FROM inventory where item_id = ?";
-        String query = "SELECT emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employee WHERE employee_id = ?";
+        String query = "SELECT employee_id,emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employee WHERE employee_id = ?";
 
 
         String prev_emp_email = "";
         int prev_employee_id=-1;
-        int prev_emp_phone=-1;
+        long prev_emp_phone=-1;
         boolean prev_is_manager = false;
         int prev_social_security = -1;
         double prev_emp_pay = -1.0;
@@ -520,9 +520,9 @@ public class jdbcpostgreSQLGUI {
 
             try(ResultSet rs = ps.executeQuery()){
                 if(rs.next()){
-                    prev_emp_email = rs.getString(1);
-                    prev_employee_id = rs.getInt(2);
-                    prev_emp_phone = rs.getInt(3);
+                    prev_employee_id = rs.getInt(1);
+                    prev_emp_email = rs.getString(2);
+                    prev_emp_phone = rs.getLong(3);
                     prev_is_manager = rs.getBoolean(4);
                     prev_social_security = rs.getInt(5);
                     prev_emp_pay = rs.getDouble(6);
@@ -566,13 +566,13 @@ public class jdbcpostgreSQLGUI {
                 )){
 
             ps.setString(1, emp_email);
-            ps.setInt(2, emp_phone);
+            ps.setLong(2, emp_phone);
             ps.setBoolean(3, is_manager);
             ps.setInt(4, social_security);
             ps.setDouble(5, emp_pay);
             ps.setInt(6, emp_bank_account);
             ps.setInt(7, employee_id);
-            ps.executeUpdate();
+            ps.execute();
             JOptionPane.showMessageDialog(null, " Item updated successfully");
         }
         catch(SQLException e){
