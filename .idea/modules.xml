@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/project2-team21-team-method.iml" filepath="$PROJECT_DIR$/.idea/project2-team21-team-method.iml" />
+      <module fileurl="file://$PROJECT_DIR$/project2-team-method.iml" filepath="$PROJECT_DIR$/project2-team-method.iml" />
     </modules>
   </component>
 </project>
