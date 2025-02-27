@@ -4,7 +4,9 @@ out/
 !**/src/test/**/out/
 
 # Ignore all .class files
+# Ignore compiled Java class files and Java jar related files
 *.class
+*.jar
 
 # Ignore a specific file dbSet.java
 src/dbSetup.java
@@ -20,6 +22,8 @@ src/dbSetup.java
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+# Ignore database setup file (HAS CREDENTIALS)
+dbSetup.java
 
 ### NetBeans ###
 /nbproject/private/
@@ -29,7 +33,13 @@ bin/
 /.nb-gradle/
 
 ### VS Code ###
+# Ignore IDE-specific files
+*.log
+*.swp
 .vscode/
 
 ### Mac OS ###
 .DS_Store
+
+.idea/
+*.iml
