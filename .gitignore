@@ -41,5 +41,4 @@ dbSetup.java
 ### Mac OS ###
 .DS_Store
 
-.idea/
 *.iml

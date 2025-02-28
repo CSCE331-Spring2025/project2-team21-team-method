@@ -1,11 +1,14 @@
 import java.sql.Timestamp;
 
+/**
+ * Transaction data class for the CashierGUI
+ */
 class TransactionData {
     int productId;
     int orderId;
     int customerId;
     String productName;
-    Timestamp purchaseDate;  
+    Timestamp purchaseDate;
     double iceAmount;
     String toppingType;
 

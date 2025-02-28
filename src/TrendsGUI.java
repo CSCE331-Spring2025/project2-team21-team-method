@@ -15,7 +15,7 @@ public class TrendsGUI {
         }
         catch (Exception e) {
             e.printStackTrace();
-            System.err.println(e.getClass().getName()+": "+e.getMessage());
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
         }
 
@@ -45,7 +45,8 @@ public class TrendsGUI {
                 sb.append("Week Start: ").append(rs.getString(1)).append(" - Orders: ").append(rs.getInt(2)).append("\n");
             }
             textArea.setText(sb.toString());
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             textArea.setText("Error loading weekly sales: " + e.getMessage());
         }
         return textArea;
@@ -62,7 +63,8 @@ public class TrendsGUI {
                 sb.append("Hour: ").append(rs.getInt(1)).append(" - Orders: ").append(rs.getInt(2)).append(" - Sales: $").append(rs.getDouble(3)).append("\n");
             }
             textArea.setText(sb.toString());
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             textArea.setText("Error loading realistic sales: " + e.getMessage());
         }
         return textArea;
@@ -79,7 +81,8 @@ public class TrendsGUI {
                 sb.append("Date: ").append(rs.getString(1)).append(" - Sales: $").append(rs.getDouble(2)).append("\n");
             }
             textArea.setText(sb.toString());
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             textArea.setText("Error loading peak sales day: " + e.getMessage());
         }
         return textArea;
@@ -93,10 +96,12 @@ public class TrendsGUI {
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 textArea.setText("Total Menu Items in Inventory: " + rs.getInt(1));
-            } else {
+            }
+            else {
                 textArea.setText("No menu inventory data available.");
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             textArea.setText("Error loading menu inventory: " + e.getMessage());
         }
         return textArea;
@@ -113,7 +118,8 @@ public class TrendsGUI {
                 sb.append("Topping: ").append(rs.getString(1)).append(" - Count: ").append(rs.getInt(2)).append("\n");
             }
             textArea.setText(sb.toString());
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             textArea.setText("Error loading most popular toppings: " + e.getMessage());
         }
         return textArea;
@@ -130,7 +136,8 @@ public class TrendsGUI {
                 sb.append("Customer ID: ").append(rs.getInt(1)).append(" - Points: ").append(rs.getInt(2)).append(" - Email: ").append(rs.getString(3)).append("\n");
             }
             textArea.setText(sb.toString());
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             textArea.setText("Error loading top customers: " + e.getMessage());
         }
         return textArea;
