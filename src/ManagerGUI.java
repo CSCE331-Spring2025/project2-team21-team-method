@@ -2,39 +2,13 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
 
-//import java.sql.DriverManager;
-/*
-CSCE 315
-9-25-2019
- */
-public class ManagerGUI {
-    //Building the connection
-    private static Connection conn = null;
-
-    public static void main(String args[]) {
-        dbSetup my = new dbSetup();
-        try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection("jdbc:postgresql://csce-315-db.engr.tamu.edu/team_21_db",
-                    my.user, my.pswd);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
-        }
-        JOptionPane.showMessageDialog(null, "Opened database successfully");
-
-        /*
-          Below section is for creating the manager dashboard
-         */
-
-        JFrame managerDashboard = new JFrame("Manager Dashboard");
-
-        managerDashboard.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        managerDashboard.setSize(800, 400);
+public class ManagerGUI extends JPanel {
+    public ManagerGUI(Connection conn) {
+        //JFrame managerDashboard = new JFrame("Manager Dashboard");
+        setLayout(new BorderLayout());
 
         JTabbedPane tabsPane = new JTabbedPane();
 
@@ -45,15 +19,14 @@ public class ManagerGUI {
         tabsPane.addTab("Tracking Page", trackingPanel);
 
 
-        JPanel trendsPanel = new JPanel();
+        JPanel trendsPanel = buildTrendsPanel(conn);
         tabsPane.addTab("Trends Page", trendsPanel);
 
         JPanel employeePanel = new JPanel();
         tabsPane.addTab("Employee Page", employeePanel);
 
+        add(tabsPane, BorderLayout.CENTER);
 
-        managerDashboard.add(tabsPane, BorderLayout.CENTER);
-        managerDashboard.setVisible(true);
         try {
             // building the order panel
             buildOrderPanel(conn, orderPanel);
@@ -62,22 +35,6 @@ public class ManagerGUI {
         catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error accessing Database.");
         }
-
-        //closing the connection
-        managerDashboard.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                if (conn != null) {
-                    try {
-                        conn.close();
-                        System.out.println("Database connection closed.");
-                    }
-                    catch (SQLException ex) {
-                        System.out.println("Error closing connection: " + ex.getMessage());
-                    }
-                }
-            }
-        });
     }
 
     private static void buildOrderPanel(Connection conn, JPanel orderPanel) {
@@ -193,6 +150,162 @@ public class ManagerGUI {
 
         orderPanel.add(inventoryTableScrollPane, BorderLayout.CENTER);
         orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
+    }
+
+    private static JPanel buildTrendsPanel(Connection conn) {
+        JPanel trendsPanel = new JPanel();
+        trendsPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10); // spacing
+        gbc.gridx = 0; // Column index start at 0
+        gbc.gridy = 0; // Row index start at 0
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Allow horizontal stretching where needed
+
+        // stretch
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+
+        JTextArea weeklySales = fetchWeeklySales(conn);
+        JTextArea realisticSales = fetchRealisticSales(conn);
+        JTextArea peakSales = fetchPeakSalesDay(conn);
+        JTextArea menuInventory = fetchMenuInventory(conn);
+        JTextArea popularToppings = fetchMostPopularToppings(conn);
+        JTextArea topCustomers = fetchTopCustomers(conn);
+
+        addSectionToPanel(trendsPanel, "Weekly Sales History", weeklySales, gbc);
+        addSectionToPanel(trendsPanel, "Realistic Sales History", realisticSales, gbc);
+        addSectionToPanel(trendsPanel, "Peak Sales Day", peakSales, gbc);
+        addSectionToPanel(trendsPanel, "Menu Item Inventory", menuInventory, gbc);
+        addSectionToPanel(trendsPanel, "Most Popular Toppings", popularToppings, gbc);
+        addSectionToPanel(trendsPanel, "Top Customers", topCustomers, gbc);
+        return trendsPanel;
+    }
+
+    /**
+     * Adds a section to the trends grid with headers for each section
+     */
+    private static void addSectionToPanel(JPanel panel, String title, JTextArea textArea, GridBagConstraints gbc) {
+        JLabel headerLabel = new JLabel(title);
+        headerLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        gbc.gridy++; // Move to the next row
+        panel.add(headerLabel, gbc);
+
+        // make scrollable but max of 5 rows displayed at once
+        textArea.setEditable(false);
+        textArea.setRows(5);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+
+        gbc.gridy++; // Move to the next row for text area
+        panel.add(scrollPane, gbc);
+    }
+
+    private static JTextArea fetchWeeklySales(Connection conn) {
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        String query = "SELECT date_trunc('week',purchase_date) as week_start, count(order_id) as num_orders FROM customer_transaction GROUP BY week_start ORDER BY week_start";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            StringBuilder sb = new StringBuilder();
+            while (rs.next()) {
+                sb.append("Week Start: ").append(rs.getString(1)).append(" - Orders: ").append(rs.getInt(2)).append("\n");
+            }
+            textArea.setText(sb.toString());
+        }
+        catch (SQLException e) {
+            textArea.setText("Error loading weekly sales: " + e.getMessage());
+        }
+        return textArea;
+    }
+
+    private static JTextArea fetchRealisticSales(Connection conn) {
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        String query = "SELECT extract('hour' from ct.purchase_date) as hour, count(order_id) as orders, sum(p.product_cost) as sales FROM customer_transaction ct JOIN product p ON ct.product_id = p.product_id GROUP BY hour ORDER BY hour";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            StringBuilder sb = new StringBuilder();
+            while (rs.next()) {
+                sb.append("Hour: ").append(rs.getInt(1)).append(" - Orders: ").append(rs.getInt(2)).append(" - Sales: $").append(rs.getDouble(3)).append("\n");
+            }
+            textArea.setText(sb.toString());
+        }
+        catch (SQLException e) {
+            textArea.setText("Error loading realistic sales: " + e.getMessage());
+        }
+        return textArea;
+    }
+
+    private static JTextArea fetchPeakSalesDay(Connection conn) {
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        String query = "SELECT date(purchase_date) as date, sum(p.product_cost) as sales FROM customer_transaction ct JOIN product p ON ct.product_id = p.product_id GROUP BY date ORDER BY sales DESC LIMIT 10";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            StringBuilder sb = new StringBuilder();
+            while (rs.next()) {
+                sb.append("Date: ").append(rs.getString(1)).append(" - Sales: $").append(rs.getDouble(2)).append("\n");
+            }
+            textArea.setText(sb.toString());
+        }
+        catch (SQLException e) {
+            textArea.setText("Error loading peak sales day: " + e.getMessage());
+        }
+        return textArea;
+    }
+
+    private static JTextArea fetchMenuInventory(Connection conn) {
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        String query = "SELECT count(*) FROM menu_item_inventory";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                textArea.setText("Total Menu Items in Inventory: " + rs.getInt(1));
+            }
+            else {
+                textArea.setText("No menu inventory data available.");
+            }
+        }
+        catch (SQLException e) {
+            textArea.setText("Error loading menu inventory: " + e.getMessage());
+        }
+        return textArea;
+    }
+
+    private static JTextArea fetchMostPopularToppings(Connection conn) {
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        String query = "SELECT topping_type, COUNT(topping_type) FROM customer_transaction GROUP BY topping_type";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            StringBuilder sb = new StringBuilder();
+            while (rs.next()) {
+                sb.append("Topping: ").append(rs.getString(1)).append(" - Count: ").append(rs.getInt(2)).append("\n");
+            }
+            textArea.setText(sb.toString());
+        }
+        catch (SQLException e) {
+            textArea.setText("Error loading most popular toppings: " + e.getMessage());
+        }
+        return textArea;
+    }
+
+    private static JTextArea fetchTopCustomers(Connection conn) {
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        String query = "SELECT cr.customer_id, cr.points, cr.email FROM customer_reward cr ORDER BY cr.points DESC LIMIT 10";
+        try (PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            StringBuilder sb = new StringBuilder();
+            while (rs.next()) {
+                sb.append("Customer ID: ").append(rs.getInt(1)).append(" - Points: ").append(rs.getInt(2)).append(" - Email: ").append(rs.getString(3)).append("\n");
+            }
+            textArea.setText(sb.toString());
+        }
+        catch (SQLException e) {
+            textArea.setText("Error loading top customers: " + e.getMessage());
+        }
+        return textArea;
     }
 
     private static void buildInventoryTable(Connection conn, DefaultTableModel inventoryTableModel) {

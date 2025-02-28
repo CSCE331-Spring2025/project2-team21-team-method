@@ -36,8 +36,7 @@ import java.util.Random;
  * - payment methods
  */
 
-public class CashierGUI {
-    private static Connection conn = null;
+public class CashierGUI extends JPanel {
     private static DefaultTableModel currentTransactionModel;
     private static final List<TransactionData> currentTransactionList = new ArrayList<>();
     private static int loggedInCustomerId = -1;
@@ -47,25 +46,11 @@ public class CashierGUI {
     private static JPanel customizePanel;
     private static CardLayout panelSwitcher;
     private static String currentDrink;
+    private static Connection conn = null;
 
-    public static void main(String[] args) {
-        dbSetup my = new dbSetup();
-        try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection("jdbc:postgresql://csce-315-db.engr.tamu.edu/team_21_db",
-                    my.user, my.pswd);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
-        }
-
-        // Create Main Frame
-        JFrame cashierDashboard = new JFrame("Cashier Dashboard");
-        cashierDashboard.setSize(1000, 600);
-        cashierDashboard.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        cashierDashboard.setLayout(new BorderLayout());
+    public CashierGUI(Connection conn) {
+        CashierGUI.conn = conn;
+        setLayout(new BorderLayout());
 
         // Sidebar Panel (Left)
         JPanel sidebarPanel = new JPanel(new BorderLayout());
@@ -123,29 +108,11 @@ public class CashierGUI {
         ////////////////////////////////////// MAIN CONTENT SECTION ///////////////////////////////////
 
         // Add sidebar and main screen to the frame
-        cashierDashboard.add(sidebarPanel, BorderLayout.WEST);
-        cashierDashboard.add(mainPanel, BorderLayout.CENTER);
-
-        cashierDashboard.setVisible(true);
+        add(sidebarPanel, BorderLayout.WEST);
+        add(mainPanel, BorderLayout.CENTER);
 
         // Pay Button Action
         payButton.addActionListener(e -> finalizeTransaction());
-
-        // Close database connection on window close
-        cashierDashboard.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                if (conn != null) {
-                    try {
-                        conn.close();
-                        System.out.println("Database connection closed.");
-                    }
-                    catch (SQLException ex) {
-                        System.out.println("Error closing connection: " + ex.getMessage());
-                    }
-                }
-            }
-        });
     }
 
     /**
