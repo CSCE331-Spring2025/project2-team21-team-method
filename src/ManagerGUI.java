@@ -8,6 +8,21 @@ import javax.swing.table.DefaultTableModel;
 public class ManagerGUI extends JPanel {
     public ManagerGUI(Connection conn) {
         //JFrame managerDashboard = new JFrame("Manager Dashboard");
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // If Nimbus is not available, fall back to cross-platform
+            try {
+                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            } catch (Exception ex) {
+                // Not worth my time
+            }
+        }
         setLayout(new BorderLayout());
 
         JTabbedPane tabsPane = new JTabbedPane();
@@ -25,12 +40,18 @@ public class ManagerGUI extends JPanel {
         JPanel employeePanel = new JPanel();
         tabsPane.addTab("Employee Page", employeePanel);
 
+        JPanel productPanel = new JPanel();
+        tabsPane.addTab("Product Page", productPanel);
+
+
         add(tabsPane, BorderLayout.CENTER);
 
         try {
             // building the order panel
             buildOrderPanel(conn, orderPanel);
             buildEmployeePanel(conn, employeePanel);
+            buildProductPanel(conn, productPanel);
+            buildTrackingPanel(conn, trackingPanel);
         }
         catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error accessing Database.");
@@ -131,7 +152,6 @@ public class ManagerGUI extends JPanel {
                     return;
                 }
                 int numId = Integer.parseInt(tempId);
-                // TODO: Eshaan refactor
                 int numAmount;
                 int numTransactionId;
                 if (!tempAmount.isEmpty()) {
@@ -140,8 +160,6 @@ public class ManagerGUI extends JPanel {
                 if (!tempTransactionId.isEmpty()) {
                     numTransactionId = Integer.parseInt(tempTransactionId);
                 }
-
-                // should I add checks for empty and value checking ?
                 deleteValueIntoDatabase(conn, numId);
                 buildInventoryTable(conn, inventoryTableModel);
             }
@@ -710,5 +728,288 @@ public class ManagerGUI extends JPanel {
             JOptionPane.showMessageDialog(null, "Error deleting inventory item: " + e.getMessage());
         }
     }
+    private static void buildProductPanel(Connection conn, JPanel productPanel) {
+        // Create a DefaultTableModel with columns for product data
+        DefaultTableModel productTableModel = new DefaultTableModel(
+                new String[] {"Product ID", "Product Name", "Cost", "Type"}, 0
+        );
+        JTable productTable = new JTable(productTableModel);
+        JScrollPane productTableScrollPane = new JScrollPane(productTable);
+
+        // Populate the table with current product data
+        refreshProductTable(conn, productTableModel);
+
+        // Create a panel where the manager can insert or update products
+        JPanel modifyProductsPanel = new JPanel(new FlowLayout());
+
+        // Text fields for product ID, name, cost, and type
+        JTextField idField = new JTextField(3);
+        JTextField nameField = new JTextField(20);
+        JTextField costField = new JTextField(5);
+        JTextField typeField = new JTextField(10);
+
+        // Add labels and fields to the modifyProductsPanel
+        modifyProductsPanel.add(new JLabel("Product ID:"));
+        modifyProductsPanel.add(idField);
+
+        modifyProductsPanel.add(new JLabel("Name:"));
+        modifyProductsPanel.add(nameField);
+
+        modifyProductsPanel.add(new JLabel("Cost:"));
+        modifyProductsPanel.add(costField);
+
+        modifyProductsPanel.add(new JLabel("Type:"));
+        modifyProductsPanel.add(typeField);
+
+        // -----------------------------------------------------
+        // INSERT button
+        // -----------------------------------------------------
+        JButton insertButton = new JButton("INSERT");
+        insertButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Gather values from text fields
+                String temp_id = idField.getText().trim();
+                String temp_name = nameField.getText().trim();
+                String temp_cost = costField.getText().trim();
+                String temp_type = typeField.getText().trim();
+
+                // Check if all fields are filled
+                if (temp_id.isEmpty() || temp_name.isEmpty() || temp_cost.isEmpty() || temp_type.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Please fill all fields (ID, Name, Cost, Type).");
+                    return;
+                }
+
+                // Convert numeric fields
+                try {
+                    int productId = Integer.parseInt(temp_id);
+                    float cost = Float.parseFloat(temp_cost);
+
+                    // Insert the product into the database
+                    insertProductIntoDatabase(conn, productId, temp_name, cost, temp_type);
+
+                    // Refresh the table
+                    refreshProductTable(conn, productTableModel);
+
+                    // Clear text fields
+                    idField.setText("");
+                    nameField.setText("");
+                    costField.setText("");
+                    typeField.setText("");
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null,
+                            "Product ID must be an integer and Cost must be a valid number."
+                    );
+                }
+            }
+        });
+        modifyProductsPanel.add(insertButton);
+
+        // -----------------------------------------------------
+        // UPDATE button
+        // -----------------------------------------------------
+        JButton updateButton = new JButton("UPDATE");
+        updateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String temp_id = idField.getText().trim();
+                String temp_name = nameField.getText().trim();
+                String temp_cost = costField.getText().trim();
+                String temp_type = typeField.getText().trim();
+
+                // Product ID is required for update
+                if (temp_id.isEmpty()) {
+                    JOptionPane.showMessageDialog(null,
+                            "Please fill the Product ID field for update."
+                    );
+                    return;
+                }
+
+                int productId;
+                float costVal = -1; // sentinel for "no cost entered"
+                try {
+                    productId = Integer.parseInt(temp_id);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Product ID must be an integer.");
+                    return;
+                }
+
+                // If cost field is not empty, parse it
+                if (!temp_cost.isEmpty()) {
+                    try {
+                        costVal = Float.parseFloat(temp_cost);
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(null, "Cost must be a valid number.");
+                        return;
+                    }
+                }
+
+                // Retrieve current DB values if fields are left blank
+                String prevName = "";
+                float prevCost = -1;
+                String prevType = "";
+                String selectQuery = "SELECT product_name, product_cost, product_type FROM product WHERE product_id = ?";
+
+                try (PreparedStatement ps = conn.prepareStatement(selectQuery)) {
+                    ps.setInt(1, productId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            prevName = rs.getString("product_name");
+                            prevCost = rs.getFloat("product_cost");
+                            prevType = rs.getString("product_type");
+                        } else {
+                            JOptionPane.showMessageDialog(null,
+                                    "No product found with ID: " + productId
+                            );
+                            return;
+                        }
+                    }
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error fetching current product details: " + ex.getMessage()
+                    );
+                    return;
+                }
+
+                // Use previous values if the new fields are empty
+                String newName = temp_name.isEmpty() ? prevName : temp_name;
+                float newCost = (costVal == -1) ? prevCost : costVal;
+                String newType = temp_type.isEmpty() ? prevType : temp_type;
+
+                // Update the product in the database
+                updateProductIntoDatabase(conn, productId, newName, newCost, newType);
+
+                // Refresh the table
+                refreshProductTable(conn, productTableModel);
+
+                // Optionally clear text fields
+                idField.setText("");
+                nameField.setText("");
+                costField.setText("");
+                typeField.setText("");
+            }
+        });
+        modifyProductsPanel.add(updateButton);
+
+        // -----------------------------------------------------
+        // Assemble the productPanel
+        // -----------------------------------------------------
+        productPanel.setLayout(new BorderLayout());
+        productPanel.add(productTableScrollPane, BorderLayout.CENTER);
+        productPanel.add(modifyProductsPanel, BorderLayout.SOUTH);
+    }
+
+    // =====================================================
+// This method refreshes the product table by selecting
+// from the 'product' table and updating the table model.
+// =====================================================
+    private static void refreshProductTable(Connection conn, DefaultTableModel productTableModel) {
+        // Clear existing rows
+        productTableModel.setRowCount(0);
+
+        String query = "SELECT product_id, product_name, product_cost, product_type FROM product";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                String id = String.valueOf(rs.getInt("product_id"));
+                String name = rs.getString("product_name");
+                String cost = String.valueOf(rs.getFloat("product_cost"));
+                String type = rs.getString("product_type");
+
+                // Add row to the table model
+                productTableModel.addRow(new String[] {id, name, cost, type});
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error loading product table: " + e.getMessage()
+            );
+        }
+    }
+
+    // =====================================================
+// This method inserts a new product into the 'product'
+// table. The user must provide valid ID, name, cost, type.
+// =====================================================
+    private static void insertProductIntoDatabase(
+            Connection conn, int productId, String name, float cost, String type
+    ) {
+        String insertSQL = "INSERT INTO product (product_id, product_name, product_cost, product_type) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(insertSQL)) {
+            ps.setInt(1, productId);
+            ps.setString(2, name);
+            ps.setFloat(3, cost);
+            ps.setString(4, type);
+            ps.executeUpdate();
+            JOptionPane.showMessageDialog(null, "Product inserted successfully!");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error inserting product: " + e.getMessage()
+            );
+        }
+    }
+
+    // =====================================================
+// This method updates an existing product in the
+// 'product' table, given its product_id. Any fields
+// left blank will use the existing DB values.
+// =====================================================
+    private static void updateProductIntoDatabase(
+            Connection conn, int productId, String name, float cost, String type
+    ) {
+        String updateSQL = "UPDATE product SET product_name = ?, product_cost = ?, product_type = ? WHERE product_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(updateSQL)) {
+            ps.setString(1, name);
+            ps.setFloat(2, cost);
+            ps.setString(3, type);
+            ps.setInt(4, productId);
+
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                JOptionPane.showMessageDialog(null, "Product updated successfully!");
+            } else {
+                JOptionPane.showMessageDialog(null, "No product found with ID: " + productId);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error updating product: " + e.getMessage()
+            );
+        }
+    }
+    private static void buildTrackingPanel(Connection conn, JPanel trackingPanel) {
+        // Create a table model for tracking data
+        DefaultTableModel trackingTableModel = new DefaultTableModel(
+                new String[] {"Transaction ID", "Tracking Number", "Vendor ID", "Estimated Delivery"}, 0
+        );
+        JTable trackingTable = new JTable(trackingTableModel);
+        JScrollPane trackingScrollPane = new JScrollPane(trackingTable);
+
+        // Load data from company_transaction
+        refreshTrackingTable(conn, trackingTableModel);
+
+        trackingPanel.setLayout(new BorderLayout());
+        trackingPanel.add(trackingScrollPane, BorderLayout.CENTER);
+    }
+
+    private static void refreshTrackingTable(Connection conn, DefaultTableModel model) {
+        model.setRowCount(0);
+        String query = "SELECT transaction_id, tracking_number, vendor_id, estimated_delivery FROM company_transaction";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while(rs.next()) {
+                String tID = String.valueOf(rs.getInt("transaction_id"));
+                String tNumber = String.valueOf(rs.getInt("tracking_number"));
+                String vID = String.valueOf(rs.getInt("vendor_id"));
+                // If estimated_delivery is a date or timestamp, you can do:
+                String estDelivery = String.valueOf(rs.getObject("estimated_delivery"));
+                // Or simply rs.getString("estimated_delivery") if it's a text column
+
+                model.addRow(new String[] {tID, tNumber, vID, estDelivery});
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error loading tracking table: " + e.getMessage());
+        }
+    }
+
 
 }
