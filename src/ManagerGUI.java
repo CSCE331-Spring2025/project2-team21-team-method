@@ -3,6 +3,7 @@ import java.awt.event.*;
 import java.sql.*;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
 public class ManagerGUI extends JPanel {
@@ -61,31 +62,65 @@ public class ManagerGUI extends JPanel {
     private static void buildOrderPanel(Connection conn, JPanel orderPanel) {
         DefaultTableModel inventoryTableModel = new DefaultTableModel(new String[]{"Item ID", "Item Name", "Amount Left"}, 0);
         JTable inventoryTable = new JTable(inventoryTableModel);
+        inventoryTable.setRowHeight(30);
+        inventoryTable.setFont(new Font("Arial", Font.PLAIN, 12));
+        inventoryTable.setForeground(Color.DARK_GRAY);
+        inventoryTable.setBackground(Color.WHITE);
+        inventoryTable.setGridColor(Color.DARK_GRAY);
+
         JScrollPane inventoryTableScrollPane = new JScrollPane(inventoryTable);
+        inventoryTableScrollPane.setPreferredSize(new Dimension(800, 600));
 
         buildInventoryTable(conn, inventoryTableModel);
 
         // creating an area where the manager can add update and delete items
+        JPanel modifyItemsPanel = new JPanel(new GridBagLayout());
+        modifyItemsPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),"Modify Inventory",
+                TitledBorder.LEFT,TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
+        ));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(3,3,3,3);
 
-        JPanel modifyItemsPanel = new JPanel(new FlowLayout());
         JTextField id = new JTextField(3);
         JTextField name = new JTextField(20);
         JTextField amount = new JTextField(5);
         JTextField transactionId = new JTextField(20);
 
-        modifyItemsPanel.add(new JLabel("Item ID"));
-        modifyItemsPanel.add(id);
+        JLabel idLabel = new JLabel("ItemId");
+        JLabel nameLabel = new JLabel("Item Name");
+        JLabel amountLabel = new JLabel("Item Amount");
+        JLabel transactionLabel = new JLabel("Transaction ID");
 
-        modifyItemsPanel.add(new JLabel("Item name"));
-        modifyItemsPanel.add(name);
+        gbc.gridx =0;
+        gbc.gridy =0;
+        modifyItemsPanel.add(idLabel, gbc);
+        gbc.gridx =1;
+        modifyItemsPanel.add(id,gbc);
 
-        modifyItemsPanel.add(new JLabel("Item amount"));
-        modifyItemsPanel.add(amount);
+        gbc.gridx =0;
+        gbc.gridy =1;
+        modifyItemsPanel.add(nameLabel, gbc);
+        gbc.gridx =1;
+        modifyItemsPanel.add(name,gbc);
 
-        modifyItemsPanel.add(new JLabel("Transaction Number"));
-        modifyItemsPanel.add(transactionId);
+        gbc.gridx =2;
+        gbc.gridy =0;
+        modifyItemsPanel.add(amountLabel, gbc);
+        gbc.gridx =3;
+        modifyItemsPanel.add(amount,gbc);
 
+        gbc.gridx =2;
+        gbc.gridy =1;
+        modifyItemsPanel.add(transactionLabel, gbc);
+        gbc.gridx =3;
+        modifyItemsPanel.add(transactionId,gbc);
 
+        gbc.gridx =1;
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
         JButton addButton = new JButton("ADD");
         addButton.addActionListener(new ActionListener() {
             @Override
@@ -328,7 +363,7 @@ public class ManagerGUI extends JPanel {
 
     private static void buildInventoryTable(Connection conn, DefaultTableModel inventoryTableModel) {
         inventoryTableModel.setRowCount(0);
-        String query = "SELECT item_id, item_name, amount FROM inventory";
+        String query = "SELECT item_id, item_name, amount FROM inventory order by item_id";
         String id;
         String name;
         String amount;
@@ -368,26 +403,25 @@ public class ManagerGUI extends JPanel {
 
     private static void updateValueIntoDatabase(Connection conn, int id, String name, int amount, int transactionId) {
 
-        String query = "SELECT  employee_id, emp_email,emp_phone FROM employee where employee_id = ?";
+        String query = "SELECT  item_name,amount,transaction_id FROM inventory where item_id = ?";
 
-        String prevName = "";
-        int prevAmount = -1;
-        int prevTransaction = -1;
-        try (PreparedStatement ps = conn.prepareStatement(query)) {
+        String prevName="";
+        int prevAmount=-1;
+        int prevTransaction=-1;
+        try(PreparedStatement ps = conn.prepareStatement(query)){
             ps.setInt(1, id);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()){
                     prevName = rs.getString(1);
                     prevAmount = rs.getInt(2);
                     prevTransaction = rs.getInt(3);
                 }
-                else {
+                else{
                     JOptionPane.showMessageDialog(null, "No item found with ID: " + id);
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error loading the inventory table: " + e.getMessage());
         }
         if (name.isEmpty()) {
@@ -408,7 +442,7 @@ public class ManagerGUI extends JPanel {
             ps.setInt(2, amount);
             ps.setInt(3, transactionId);
             ps.setInt(4, id);
-            ps.executeUpdate();
+            ps.execute();
             JOptionPane.showMessageDialog(null, " Item updated successfully");
         }
         catch (SQLException e) {
@@ -437,10 +471,6 @@ public class ManagerGUI extends JPanel {
     }
 
 
-    //
-    // AVI CHANGE FROM THE PART BELOW
-    // employeeTableScrollPane.setPreferredSize(new Dimension(700, 200));
-    //int employee_id, String emp_email, int emp_phone, boolean is_manager, int social_security, double emp_pay, int emp_bank_account
 
     private static void buildEmployeePanel(Connection conn, JPanel employeePanel) {
         DefaultTableModel employeeTableModel = new DefaultTableModel(
@@ -449,48 +479,90 @@ public class ManagerGUI extends JPanel {
 
         JTable employeeTable = new JTable(employeeTableModel);
         JScrollPane employeeTableScrollPane = new JScrollPane(employeeTable);
-        employeeTableScrollPane.setPreferredSize(new Dimension(800, 200));
-
-
-        // Populate table with employee data
+        employeeTableScrollPane.setPreferredSize(new Dimension(800, 350));
         buildEmployeeTable(conn, employeeTableModel);
 
-        // Creating an area where the manager can add, update, and delete employees
-        JPanel modifyEmployeePanel = new JPanel(new FlowLayout());
+        employeeTable.setRowHeight(30);
+        employeeTable.setFont(new Font("Arial", Font.PLAIN, 12));
+        employeeTable.setForeground(Color.DARK_GRAY);
+        employeeTable.setBackground(Color.WHITE);
+        employeeTable.setGridColor(Color.DARK_GRAY);
 
 
-        // Input fields for employee details
+
+        // creating an area where the manager can add update and delete items
+        JPanel modifyEmployeePanel = new JPanel(new GridBagLayout());
+        modifyEmployeePanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),"Modify EmployeeInfo",
+                TitledBorder.LEFT,TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
+        ));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(3,3,3,3);
+
         JTextField employeeIdField = new JTextField(5);
         JTextField emailField = new JTextField(20);
         JTextField phoneField = new JTextField(10);
-        JCheckBox isManagerCheck = new JCheckBox("Manager");
+        JCheckBox isManagerCheck = new JCheckBox("Yes/No");
         JTextField socialSecurityField = new JTextField(10);
         JTextField payField = new JTextField(10);
         JTextField bankAccountField = new JTextField(10);
 
-        // Adding labels and fields to the panel
-        modifyEmployeePanel.add(new JLabel("Employee ID:"));
-        modifyEmployeePanel.add(employeeIdField);
+        JLabel idLabel = new JLabel("Employee Id");
+        JLabel emailLabel = new JLabel("Email");
+        JLabel phoneLabel = new JLabel("Phone Number");
+        JLabel managerLabel = new JLabel("Manager");
+        JLabel socialLabel = new JLabel("Social Security");
+        JLabel payLabel = new JLabel("Pay");
+        JLabel bankLabel = new JLabel("Bank Account ID");
 
-        modifyEmployeePanel.add(new JLabel("Email:"));
-        modifyEmployeePanel.add(emailField);
 
-        modifyEmployeePanel.add(new JLabel("Phone:"));
-        modifyEmployeePanel.add(phoneField);
 
-        modifyEmployeePanel.add(new JLabel("Social Security:"));
-        modifyEmployeePanel.add(socialSecurityField);
+        gbc.gridx =0;
+        gbc.gridy =0;
+        modifyEmployeePanel.add(idLabel, gbc);
+        gbc.gridx =1;
+        modifyEmployeePanel.add(employeeIdField,gbc);
 
-        modifyEmployeePanel.add(new JLabel("Pay:"));
-        modifyEmployeePanel.add(payField);
+        gbc.gridx =0;
+        gbc.gridy =1;
+        modifyEmployeePanel.add(emailLabel, gbc);
+        gbc.gridx =1;
+        modifyEmployeePanel.add(emailField,gbc);
 
-        modifyEmployeePanel.add(new JLabel("Bank Account:"));
-        modifyEmployeePanel.add(bankAccountField);
+        gbc.gridx =2;
+        gbc.gridy =0;
+        modifyEmployeePanel.add(phoneLabel, gbc);
+        gbc.gridx =3;
+        modifyEmployeePanel.add(phoneField,gbc);
 
-        modifyEmployeePanel.add(isManagerCheck);
+        gbc.gridx =2;
+        gbc.gridy =1;
+        modifyEmployeePanel.add(socialLabel, gbc);
+        gbc.gridx =3;
+        modifyEmployeePanel.add(socialSecurityField,gbc);
 
-        // ADD Button
+        gbc.gridx =4;
+        gbc.gridy =0;
+        modifyEmployeePanel.add(payLabel, gbc);
+        gbc.gridx =5;
+        modifyEmployeePanel.add(payField,gbc);
+
+        gbc.gridx =4;
+        gbc.gridy =1;
+        modifyEmployeePanel.add(bankLabel, gbc);
+        gbc.gridx =5;
+        modifyEmployeePanel.add(bankAccountField,gbc);
+
+        gbc.gridx =4;
+        gbc.gridy =2;
+        modifyEmployeePanel.add(managerLabel, gbc);
+        gbc.gridx =5;
+        modifyEmployeePanel.add(isManagerCheck,gbc);
+
         JButton addButton = new JButton("ADD");
+
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -575,7 +647,7 @@ public class ManagerGUI extends JPanel {
     //modify this part
     private static void buildEmployeeTable(Connection conn, DefaultTableModel employeeTableModel) {
         employeeTableModel.setRowCount(0);
-        String query = "SELECT employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employee";
+        String query = "SELECT employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employee order by employee_id";
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -714,7 +786,7 @@ public class ManagerGUI extends JPanel {
         // we need ti check if the value exists in menu_items_inventory as well adn delte form there as well
         try (
                 PreparedStatement ps = conn.prepareStatement(
-                        "DELETE FROM inventory WHERE item_id = ?"
+                        "DELETE FROM employee WHERE employee_id = ?"
                 )) {
 
             ps.setInt(1, employeeId);
@@ -729,18 +801,29 @@ public class ManagerGUI extends JPanel {
         }
     }
     private static void buildProductPanel(Connection conn, JPanel productPanel) {
-        // Create a DefaultTableModel with columns for product data
+
         DefaultTableModel productTableModel = new DefaultTableModel(
                 new String[] {"Product ID", "Product Name", "Cost", "Type"}, 0
         );
         JTable productTable = new JTable(productTableModel);
         JScrollPane productTableScrollPane = new JScrollPane(productTable);
+        productTable.setRowHeight(30);
+        productTable.setFont(new Font("Arial", Font.PLAIN, 12));
+        productTable.setForeground(Color.DARK_GRAY);
+        productTable.setBackground(Color.WHITE);
+        productTable.setGridColor(Color.DARK_GRAY);
+        productTableScrollPane.setPreferredSize(new Dimension(800, 500));
+        buildProductTable(conn, productTableModel);
 
-        // Populate the table with current product data
-        refreshProductTable(conn, productTableModel);
-
-        // Create a panel where the manager can insert or update products
-        JPanel modifyProductsPanel = new JPanel(new FlowLayout());
+        JPanel modifyProductsPanel = new JPanel(new GridBagLayout());
+        modifyProductsPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),"Modify Products",
+                TitledBorder.LEFT,TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
+        ));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(3,3,3,3);
 
         // Text fields for product ID, name, cost, and type
         JTextField idField = new JTextField(3);
@@ -749,21 +832,38 @@ public class ManagerGUI extends JPanel {
         JTextField typeField = new JTextField(10);
 
         // Add labels and fields to the modifyProductsPanel
-        modifyProductsPanel.add(new JLabel("Product ID:"));
-        modifyProductsPanel.add(idField);
+        JLabel prodLabel = new JLabel("Product ID:");
+        JLabel prodName = new JLabel("Name:");
+        JLabel prodCost = new JLabel("Cost:");
+        JLabel prodType = new JLabel("Type:");
+        gbc.gridx =0;
+        gbc.gridy =0;
+        modifyProductsPanel.add(prodLabel, gbc);
+        gbc.gridx =1;
+        modifyProductsPanel.add(idField,gbc);
 
-        modifyProductsPanel.add(new JLabel("Name:"));
-        modifyProductsPanel.add(nameField);
+        gbc.gridx =0;
+        gbc.gridy =1;
+        modifyProductsPanel.add(prodName, gbc);
+        gbc.gridx =1;
+        modifyProductsPanel.add(nameField,gbc);
 
-        modifyProductsPanel.add(new JLabel("Cost:"));
-        modifyProductsPanel.add(costField);
+        gbc.gridx =2;
+        gbc.gridy =0;
+        modifyProductsPanel.add(prodCost, gbc);
+        gbc.gridx =3;
+        modifyProductsPanel.add(costField,gbc);
 
-        modifyProductsPanel.add(new JLabel("Type:"));
-        modifyProductsPanel.add(typeField);
+        gbc.gridx =2;
+        gbc.gridy =1;
+        modifyProductsPanel.add(prodType, gbc);
+        gbc.gridx =3;
+        modifyProductsPanel.add(typeField,gbc);
 
-        // -----------------------------------------------------
-        // INSERT button
-        // -----------------------------------------------------
+
+
+
+
         JButton insertButton = new JButton("INSERT");
         insertButton.addActionListener(new ActionListener() {
             @Override
@@ -773,25 +873,17 @@ public class ManagerGUI extends JPanel {
                 String temp_name = nameField.getText().trim();
                 String temp_cost = costField.getText().trim();
                 String temp_type = typeField.getText().trim();
-
-                // Check if all fields are filled
                 if (temp_id.isEmpty() || temp_name.isEmpty() || temp_cost.isEmpty() || temp_type.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "Please fill all fields (ID, Name, Cost, Type).");
                     return;
                 }
-
-                // Convert numeric fields
                 try {
                     int productId = Integer.parseInt(temp_id);
                     float cost = Float.parseFloat(temp_cost);
 
-                    // Insert the product into the database
                     insertProductIntoDatabase(conn, productId, temp_name, cost, temp_type);
+                    buildProductTable(conn, productTableModel);
 
-                    // Refresh the table
-                    refreshProductTable(conn, productTableModel);
-
-                    // Clear text fields
                     idField.setText("");
                     nameField.setText("");
                     costField.setText("");
@@ -805,9 +897,6 @@ public class ManagerGUI extends JPanel {
         });
         modifyProductsPanel.add(insertButton);
 
-        // -----------------------------------------------------
-        // UPDATE button
-        // -----------------------------------------------------
         JButton updateButton = new JButton("UPDATE");
         updateButton.addActionListener(new ActionListener() {
             @Override
@@ -880,9 +969,8 @@ public class ManagerGUI extends JPanel {
                 updateProductIntoDatabase(conn, productId, newName, newCost, newType);
 
                 // Refresh the table
-                refreshProductTable(conn, productTableModel);
+                buildProductTable(conn, productTableModel);
 
-                // Optionally clear text fields
                 idField.setText("");
                 nameField.setText("");
                 costField.setText("");
@@ -891,23 +979,16 @@ public class ManagerGUI extends JPanel {
         });
         modifyProductsPanel.add(updateButton);
 
-        // -----------------------------------------------------
-        // Assemble the productPanel
-        // -----------------------------------------------------
         productPanel.setLayout(new BorderLayout());
         productPanel.add(productTableScrollPane, BorderLayout.CENTER);
         productPanel.add(modifyProductsPanel, BorderLayout.SOUTH);
     }
 
-    // =====================================================
-// This method refreshes the product table by selecting
-// from the 'product' table and updating the table model.
-// =====================================================
-    private static void refreshProductTable(Connection conn, DefaultTableModel productTableModel) {
+    private static void buildProductTable(Connection conn, DefaultTableModel productTableModel) {
         // Clear existing rows
         productTableModel.setRowCount(0);
 
-        String query = "SELECT product_id, product_name, product_cost, product_type FROM product";
+        String query = "SELECT product_id, product_name, product_cost, product_type FROM product order by product_id";
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
@@ -927,10 +1008,7 @@ public class ManagerGUI extends JPanel {
         }
     }
 
-    // =====================================================
-// This method inserts a new product into the 'product'
-// table. The user must provide valid ID, name, cost, type.
-// =====================================================
+
     private static void insertProductIntoDatabase(
             Connection conn, int productId, String name, float cost, String type
     ) {
@@ -949,11 +1027,7 @@ public class ManagerGUI extends JPanel {
         }
     }
 
-    // =====================================================
-// This method updates an existing product in the
-// 'product' table, given its product_id. Any fields
-// left blank will use the existing DB values.
-// =====================================================
+
     private static void updateProductIntoDatabase(
             Connection conn, int productId, String name, float cost, String type
     ) {
@@ -983,15 +1057,19 @@ public class ManagerGUI extends JPanel {
         );
         JTable trackingTable = new JTable(trackingTableModel);
         JScrollPane trackingScrollPane = new JScrollPane(trackingTable);
-
-        // Load data from company_transaction
-        refreshTrackingTable(conn, trackingTableModel);
+        trackingTable.setRowHeight(30);
+        trackingTable.setFont(new Font("Arial", Font.PLAIN, 12));
+        trackingTable.setForeground(Color.DARK_GRAY);
+        trackingTable.setBackground(Color.WHITE);
+        trackingTable.setGridColor(Color.DARK_GRAY);
+        trackingScrollPane.setPreferredSize(new Dimension(800, 500));
+        buildTrackingTable(conn, trackingTableModel);
 
         trackingPanel.setLayout(new BorderLayout());
         trackingPanel.add(trackingScrollPane, BorderLayout.CENTER);
     }
 
-    private static void refreshTrackingTable(Connection conn, DefaultTableModel model) {
+    private static void buildTrackingTable(Connection conn, DefaultTableModel model) {
         model.setRowCount(0);
         String query = "SELECT transaction_id, tracking_number, vendor_id, estimated_delivery FROM company_transaction";
         try (Statement stmt = conn.createStatement();
