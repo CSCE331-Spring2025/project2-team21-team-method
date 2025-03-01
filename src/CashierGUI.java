@@ -66,17 +66,13 @@ public class CashierGUI extends JPanel {
         sidebarPanel.add(sidebarTitle, BorderLayout.NORTH);
         sidebarPanel.add(transactionScrollPane, BorderLayout.CENTER);
 
-        // Pay Button - located at bottom of sidebare
+        // Pay Button - located at bottom of sidebar
         JButton payButton = new JButton("Pay");
         sidebarPanel.add(payButton, BorderLayout.SOUTH);
 
         ////////////////////////////////////// MAIN CONTENT SECTION ///////////////////////////////////
-        // TODO: integrate your main content section here.
-        // TODO: make sure the button on main section links to adding items into sidebar
 
         // Main Content Panel (Right)
-        JLabel placeholder = new JLabel("Main Screen", SwingConstants.CENTER);
-        placeholder.setFont(new Font("Arial", Font.BOLD, 18));
 
         // Main Panel for Drink Selection and Customization
         panelSwitcher = new CardLayout();
@@ -84,6 +80,7 @@ public class CashierGUI extends JPanel {
 
         JPanel mainInterPanel = new JPanel();
         mainInterPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        mainInterPanel.setPreferredSize(new Dimension(800, 600));
 
         /** Drink selection for general types of drink */
         ArrayList<String> drinkTypes = getDrinkTypesFromDB();
@@ -93,16 +90,27 @@ public class CashierGUI extends JPanel {
             drinkButton.addActionListener(e -> showSpecificDrinks(drinks));
             mainInterPanel.add(drinkButton);
         }
-
-        mainPanel.add(mainInterPanel, "General Drinks");
+        // Scroller cause everything is getting too big
+        JScrollPane generalScrollPanel = new JScrollPane(mainInterPanel);
+        generalScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        generalScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainPanel.add(generalScrollPanel, "General Drinks");
 
         /* Drink selection for specific types of drink */
         selectPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
-        mainPanel.add(selectPanel, "Specific Drink Selection");
+        selectPanel.setPreferredSize(new Dimension(800, 600));
+        JScrollPane selectScrollPanel = new JScrollPane(selectPanel);
+        selectScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        selectScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainPanel.add(selectScrollPanel, "Specific Drink Selection");
 
         /* Drink customizer after specific drink selection */
         customizePanel = new JPanel(new GridBagLayout());
-        mainPanel.add(customizePanel, "Customize Drink");
+        customizePanel.setPreferredSize(new Dimension(800, 600));
+        JScrollPane customizeScrollPanel = new JScrollPane(customizePanel);
+        customizeScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        customizeScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainPanel.add(customizeScrollPanel, "Customize Drink");
 
 
         ////////////////////////////////////// MAIN CONTENT SECTION ///////////////////////////////////
@@ -182,7 +190,17 @@ public class CashierGUI extends JPanel {
         ArrayList<String> drinks = getDrinksByType(drinkType);
         for (String drink : drinks) {
             JButton drinkButton = new JButton(drink);
-            drinkButton.setPreferredSize(new Dimension(150, 50));
+            drinkButton.setPreferredSize(new Dimension(150, 150));
+
+            String imagePath = "../specificDrinkIMGs/" + drink + ".jpg";
+            ImageIcon icon = new ImageIcon(imagePath);
+            Image scaledImage = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+            icon = new ImageIcon(scaledImage);
+
+            drinkButton.setVerticalTextPosition(SwingConstants.TOP);
+            drinkButton.setHorizontalTextPosition(SwingConstants.CENTER);
+            drinkButton.setIcon(icon);
+
             drinkButton.addActionListener(e -> showCustomizeDrink(drink));
             selectPanel.add(drinkButton);
         }
