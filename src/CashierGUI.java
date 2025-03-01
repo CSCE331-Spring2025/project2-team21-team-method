@@ -80,7 +80,6 @@ public class CashierGUI extends JPanel {
 
         JPanel mainInterPanel = new JPanel();
         mainInterPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 20));
-        mainInterPanel.setPreferredSize(new Dimension(800, 600));
 
         /** Drink selection for general types of drink */
         ArrayList<String> drinkTypes = getDrinkTypesFromDB();
@@ -90,27 +89,16 @@ public class CashierGUI extends JPanel {
             drinkButton.addActionListener(e -> showSpecificDrinks(drinks));
             mainInterPanel.add(drinkButton);
         }
-        // Scroller cause everything is getting too big
-        JScrollPane generalScrollPanel = new JScrollPane(mainInterPanel);
-        generalScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        generalScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        mainPanel.add(generalScrollPanel, "General Drinks");
+
+        mainPanel.add(mainInterPanel, "General Drinks");
 
         /* Drink selection for specific types of drink */
         selectPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
-        selectPanel.setPreferredSize(new Dimension(800, 600));
-        JScrollPane selectScrollPanel = new JScrollPane(selectPanel);
-        selectScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        selectScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        mainPanel.add(selectScrollPanel, "Specific Drink Selection");
+        mainPanel.add(selectPanel, "Specific Drink Selection");
 
         /* Drink customizer after specific drink selection */
         customizePanel = new JPanel(new GridBagLayout());
-        customizePanel.setPreferredSize(new Dimension(800, 600));
-        JScrollPane customizeScrollPanel = new JScrollPane(customizePanel);
-        customizeScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        customizeScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        mainPanel.add(customizeScrollPanel, "Customize Drink");
+        mainPanel.add(customizePanel, "Customize Drink");
 
 
         ////////////////////////////////////// MAIN CONTENT SECTION ///////////////////////////////////
@@ -126,6 +114,19 @@ public class CashierGUI extends JPanel {
     /**
      * Helper function
      */
+    class WrapLayout extends FlowLayout {
+        public WrapLayout() {
+            super(FlowLayout.CENTER, 20, 20);
+        }
+
+        @Override
+        public Dimension preferredLayoutSize(Container target) {
+            Dimension size = super.preferredLayoutSize(target);
+            size.width = Math.max(target.getParent().getWidth(), size.width);
+            return size;
+        }
+    }
+
     private static ArrayList<String> getColVal(String query, String... params) {
         ArrayList<String> values = new ArrayList<>();
         try {
