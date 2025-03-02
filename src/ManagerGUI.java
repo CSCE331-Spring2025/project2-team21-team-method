@@ -201,6 +201,14 @@ public class ManagerGUI extends JPanel {
         });
         modifyItemsPanel.add(deleteButton);
 
+        JPanel wrapperPanel = new JPanel();
+        wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.Y_AXIS));
+        wrapperPanel.add(inventoryTableScrollPane);
+        wrapperPanel.add(modifyItemsPanel);
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+
         /// Button for closing business and Z-report generation ///
         JButton closeBusinessButton = new JButton("Close Business Day");
         closeBusinessButton.setFont(new Font("Arial", Font.BOLD, 18));
@@ -209,10 +217,14 @@ public class ManagerGUI extends JPanel {
         closeBusinessButton.addActionListener(e -> closeBusinessWorkflow(conn));
         /// Button Done ///
 
-        orderPanel.add(inventoryTableScrollPane, BorderLayout.CENTER);
-        orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
+        bottomPanel.add(closeBusinessButton);
 
-        orderPanel.add(closeBusinessButton, BorderLayout.SOUTH); // Last possible button
+//        orderPanel.add(inventoryTableScrollPane, BorderLayout.CENTER);
+//        orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
+//        orderPanel.add(closeBusinessButton, BorderLayout.SOUTH); // Last possible button
+        orderPanel.setLayout(new BorderLayout());
+        orderPanel.add(wrapperPanel, BorderLayout.CENTER);
+        orderPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
     private static JPanel buildTrendsPanel(Connection conn) {
@@ -1127,6 +1139,7 @@ public class ManagerGUI extends JPanel {
         CashierGUI.currentTransactionModel.setRowCount(0);
     }
 
+    /* TODO: Add more queries for more results */
     private static String generateZReport(Connection conn) {
         StringBuilder report = new StringBuilder("Z-Report - Daily Sales Summary\n");
 
