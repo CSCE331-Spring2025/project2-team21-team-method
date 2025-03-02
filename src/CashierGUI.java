@@ -73,6 +73,29 @@ public class CashierGUI extends JPanel {
             mainInterPanel.add(drinkButton);
         }
 
+        // Customer ID button
+        JButton customerIdButton = new JButton("Customer ID");
+        customerIdButton.setPreferredSize(new Dimension(200, 50));
+        customerIdButton.setFont(new Font("Arial", Font.BOLD, 24));
+        customerIdButton.setBackground(new Color(255, 165, 0)); // Orange color
+        customerIdButton.setForeground(Color.WHITE);
+
+        customerIdButton.addActionListener(e -> {
+            String input = JOptionPane.showInputDialog(null, "Enter Customer ID:", "Customer Login", JOptionPane.QUESTION_MESSAGE);
+
+            if (input != null && !input.trim().isEmpty()) {
+                try {
+                    int customerId = Integer.parseInt(input.trim()); // Convert input to integer
+                    setLoggedInCustomerId(customerId); // Set the ID
+                    JOptionPane.showMessageDialog(null, "Customer ID set to: " + customerId, "Success", JOptionPane.INFORMATION_MESSAGE);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid ID. Please enter a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        mainInterPanel.add(customerIdButton);
+
         // mainPanel.add(mainInterPanel, "General Drinks");
 
         mainInterScrollPane = new JScrollPane(mainInterPanel);
@@ -441,6 +464,7 @@ public class CashierGUI extends JPanel {
 
             // Clear transaction list & UI
             currentTransactionModel.setRowCount(0);
+            setLoggedInCustomerId(0);
             currentTransactionList.clear();
 
         }
