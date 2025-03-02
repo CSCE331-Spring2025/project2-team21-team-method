@@ -16,8 +16,8 @@ import java.util.Random;
  */
 
 public class CashierGUI extends JPanel {
-    private static DefaultTableModel currentTransactionModel;
-    private static final List<TransactionData> currentTransactionList = new ArrayList<>();
+    static DefaultTableModel currentTransactionModel;
+    static final List<TransactionData> currentTransactionList = new ArrayList<>();
     private static int loggedInCustomerId = -1;
 
     private static JPanel mainPanel;

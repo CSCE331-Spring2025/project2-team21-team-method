@@ -201,8 +201,18 @@ public class ManagerGUI extends JPanel {
         });
         modifyItemsPanel.add(deleteButton);
 
+        /// Button for closing business and Z-report generation ///
+        JButton closeBusinessButton = new JButton("Close Business Day");
+        closeBusinessButton.setFont(new Font("Arial", Font.BOLD, 18));
+        closeBusinessButton.setBackground(new Color(200, 0, 0));
+        closeBusinessButton.setForeground(Color.WHITE);
+        closeBusinessButton.addActionListener(e -> closeBusinessWorkflow(conn));
+        /// Button Done ///
+
         orderPanel.add(inventoryTableScrollPane, BorderLayout.CENTER);
         orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
+
+        orderPanel.add(closeBusinessButton, BorderLayout.SOUTH); // Last possible button
     }
 
     private static JPanel buildTrendsPanel(Connection conn) {
@@ -1089,5 +1099,81 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    // Z-report pre-req
+    private static void closeBusinessWorkflow(Connection conn) {
+        String report = generateZReport(conn);
 
+        int confirm = JOptionPane.showConfirmDialog(null, report + "\n\nConfirm close of business?",
+                "Close Business Day", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                resetXReport();
+
+                JOptionPane.showMessageDialog(null, "Business day over. Shutting down...");
+                System.exit(0);
+            } catch (Exception e){
+                JOptionPane.showMessageDialog(null, "Error closing business: " + e.getMessage());
+            }
+        }
+    }
+
+    private static void resetXReport() {
+        clearTransactions();
+    }
+
+    public static void clearTransactions() {
+        CashierGUI.currentTransactionList.clear();
+        CashierGUI.currentTransactionModel.setRowCount(0);
+    }
+
+    private static String generateZReport(Connection conn) {
+        StringBuilder report = new StringBuilder("Z-Report - Daily Sales Summary\n");
+
+        try {
+            // Daily sale total
+            String salesQuery = "SELECT SUM(p.product_cost) AS total_sales FROM customer_transaction ct " +
+                    "JOIN product p ON ct.product_id = p.product_id WHERE DATE(ct.purchase_date) = CURRENT_DATE";
+            PreparedStatement ps = conn.prepareStatement(salesQuery);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                report.append("Total Sales: $").append(rs.getDouble("total_sales")).append("\n");
+            }
+
+            // All of today's transaction
+            String transactionsQuery = "SELECT COUNT(*) AS total_orders FROM customer_transaction WHERE DATE(purchase_date) = CURRENT_DATE";
+            ps = conn.prepareStatement(transactionsQuery);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                report.append("Total Transactions: ").append(rs.getInt("total_orders")).append("\n");
+            }
+
+            // Today's most popular item
+            String topItemQuery = "SELECT p.product_name, COUNT(*) AS order_count FROM customer_transaction ct " +
+                    "JOIN product p ON ct.product_id = p.product_id WHERE DATE(ct.purchase_date) = CURRENT_DATE " +
+                    "GROUP BY p.product_name ORDER BY order_count DESC LIMIT 1";
+            ps = conn.prepareStatement(topItemQuery);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                report.append("Most Sold Item: ").append(rs.getString("product_name"))
+                        .append(" (").append(rs.getInt("order_count")).append(" orders)\n");
+            }
+
+        } catch (SQLException e) {
+            return "Error generating Z-Report: " + e.getMessage();
+        }
+
+        return report.toString();
+    }
+
+    private static void logBusinessClosure(Connection conn) {
+        try {
+            String logQuery = "INSERT INTO business_closure_log (closure_date, closure_status) VALUES (CURRENT_TIMESTAMP, 'Closed')";
+            PreparedStatement ps = conn.prepareStatement(logQuery);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error logging business closure: " + e.getMessage());
+        }
+    }
 }
