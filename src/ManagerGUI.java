@@ -201,6 +201,7 @@ public class ManagerGUI extends JPanel {
         });
         modifyItemsPanel.add(deleteButton);
 
+        // New wrapper panel to permanently show the Modify Inventory section and buttons
         JPanel wrapperPanel = new JPanel();
         wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.Y_AXIS));
         wrapperPanel.add(inventoryTableScrollPane);
@@ -219,6 +220,7 @@ public class ManagerGUI extends JPanel {
 
         bottomPanel.add(closeBusinessButton);
 
+        // previous code with previous alignment for Modify Inventory
 //        orderPanel.add(inventoryTableScrollPane, BorderLayout.CENTER);
 //        orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
 //        orderPanel.add(closeBusinessButton, BorderLayout.SOUTH); // Last possible button
