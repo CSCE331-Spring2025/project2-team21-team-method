@@ -42,8 +42,11 @@ public class CashierGUI extends JPanel {
     private static int loggedInCustomerId = -1;
 
     private static JPanel mainPanel;
+    private static JScrollPane mainInterScrollPane;
     private static JPanel selectPanel;
+    private static JScrollPane selectScrollPane;
     private static JPanel customizePanel;
+    private static JScrollPane customizeScrollPane;
     private static CardLayout panelSwitcher;
     private static String currentDrink;
     private static Connection conn = null;
@@ -79,26 +82,47 @@ public class CashierGUI extends JPanel {
         mainPanel = new JPanel(panelSwitcher); //mainPanel2 will now host all the different panels
 
         JPanel mainInterPanel = new JPanel();
-        mainInterPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        mainInterPanel.setLayout(new GridLayout(4, 3, 20, 20));
 
         /** Drink selection for general types of drink */
         ArrayList<String> drinkTypes = getDrinkTypesFromDB();
         for (String drinks : drinkTypes) {
             JButton drinkButton = new JButton(drinks);
             drinkButton.setPreferredSize(new Dimension(200, 50));
+            drinkButton.setFont(new Font("Arial", Font.BOLD, 24));
             drinkButton.addActionListener(e -> showSpecificDrinks(drinks));
             mainInterPanel.add(drinkButton);
         }
 
-        mainPanel.add(mainInterPanel, "General Drinks");
+        // mainPanel.add(mainInterPanel, "General Drinks");
+
+        mainInterScrollPane = new JScrollPane(mainInterPanel);
+        mainInterScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        mainInterScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainInterScrollPane.getVerticalScrollBar().setUnitIncrement(10);
+        mainPanel.add(mainInterScrollPane, "General Drinks");
 
         /* Drink selection for specific types of drink */
-        selectPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
-        mainPanel.add(selectPanel, "Specific Drink Selection");
+        // selectPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        // mainPanel.add(selectPanel, "Specific Drink Selection");
+
+        selectPanel = new JPanel(new GridLayout(4,3, 20, 20));
+        selectScrollPane = new JScrollPane(selectPanel);
+        selectScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        selectScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        selectScrollPane.getVerticalScrollBar().setUnitIncrement(10);
+        mainPanel.add(selectScrollPane, "Specific Drink Selection");
 
         /* Drink customizer after specific drink selection */
+        //customizePanel = new JPanel(new GridBagLayout());
+        //mainPanel.add(customizePanel, "Customize Drink");
+
         customizePanel = new JPanel(new GridBagLayout());
-        mainPanel.add(customizePanel, "Customize Drink");
+        customizeScrollPane = new JScrollPane(customizePanel);
+        customizeScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        customizeScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        customizeScrollPane.getVerticalScrollBar().setUnitIncrement(10);
+        mainPanel.add(customizeScrollPane, "Customize Drink");
 
 
         ////////////////////////////////////// MAIN CONTENT SECTION ///////////////////////////////////
@@ -114,17 +138,14 @@ public class CashierGUI extends JPanel {
     /**
      * Helper function
      */
-    class WrapLayout extends FlowLayout {
-        public WrapLayout() {
-            super(FlowLayout.CENTER, 20, 20);
-        }
-
-        @Override
-        public Dimension preferredLayoutSize(Container target) {
-            Dimension size = super.preferredLayoutSize(target);
-            size.width = Math.max(target.getParent().getWidth(), size.width);
-            return size;
-        }
+    private static void resetScrollPosition(JScrollPane scrollPane) {
+        SwingUtilities.invokeLater(() -> {
+            // Reset to top position (0, 0)
+            JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
+            JScrollBar horizontalBar = scrollPane.getHorizontalScrollBar();
+            verticalBar.setValue(verticalBar.getMinimum());
+            horizontalBar.setValue(horizontalBar.getMinimum());
+        });
     }
 
     private static ArrayList<String> getColVal(String query, String... params) {
@@ -209,6 +230,8 @@ public class CashierGUI extends JPanel {
         selectPanel.revalidate();
         selectPanel.repaint();
         panelSwitcher.show(mainPanel, "Specific Drink Selection");
+
+        resetScrollPosition(selectScrollPane);
     }
 
     /**
