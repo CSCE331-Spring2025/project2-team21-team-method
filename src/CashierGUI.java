@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * (Phase 4) TODO:
+ * (Phase 4):
  * Check Pinned Google Docs
  */
 
@@ -216,6 +216,7 @@ public class CashierGUI extends JPanel {
 
     /**
      * Once drink has been selected, customization (milk & type, sugar & type, ice)
+     * TODO: make this panel look nicer
      */
     private static void showCustomizeDrink(String drink) {
         customizePanel.removeAll();
@@ -223,10 +224,15 @@ public class CashierGUI extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 3; // creates 3 columns?
         gbc.anchor = GridBagConstraints.WEST;
 
-        customizePanel.add(new JLabel("Customize " + drink), gbc);
+        JLabel heading = new JLabel("Customize " + drink);
+        heading.setFont(new Font("Arial", Font.BOLD, 18));
+        customizePanel.add(heading, gbc);
+
         gbc.gridy++;
+        gbc.gridwidth = 1; // resets width to accommodate other components
 
         ArrayList<String[]> customOptions = getCustomizeOptions();
 
@@ -244,8 +250,37 @@ public class CashierGUI extends JPanel {
             gbc.gridy++;
         }
 
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3; // Makes the buttons span the columns
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(15, 0, 0, 0);
+
         /* Retrieving and process only non-empty string into pop-up */
         JButton confirmButton = new JButton("Confirm Selection");
+        customizePanel.add(confirmButton, gbc);
+
+        gbc.gridx = 1;
+        addBackButton(customizePanel, "Specific Drink Selection");
+
+        // Toppings column
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        customizePanel.add(new JLabel("Toppings"), gbc);
+
+        gbc.gridy++;
+        String[] toppings = {"Boba", "Aloe Vera", "Red Bean", "Popping Boba", "None"};
+        HashMap<String, JCheckBox> toppingCheckboxes = new HashMap<>();
+
+        for (String topping : toppings) {
+            JCheckBox checkBox = new JCheckBox(topping);
+            customizePanel.add(checkBox, gbc);
+            toppingCheckboxes.put(topping, checkBox);
+            gbc.gridy++;
+        }
+
         confirmButton.addActionListener(e -> {
             StringBuilder orderSummary = new StringBuilder("Order placed: " + currentDrink + "\n");
 
@@ -270,9 +305,24 @@ public class CashierGUI extends JPanel {
                     }
                 }
             }
+            ArrayList<String> selectedToppings = new ArrayList<>();
+            for (Map.Entry<String, JCheckBox> entry : toppingCheckboxes.entrySet()) {
+                if (entry.getValue().isSelected()) {
+                    selectedToppings.add(entry.getKey());
+                }
+            }
+
+            if (!selectedToppings.isEmpty()) {
+                toppingType = String.join(", ", selectedToppings);
+                orderSummary.append("Toppings: ").append(toppingType).append("\n");
+                hasCustomizations = true;
+            }
+
             if (!hasCustomizations) {
                 orderSummary.append("No customizations.");
             }
+
+            //TODO: BEAUTIFY
             JOptionPane.showMessageDialog(null, orderSummary.toString());
 
             int productId = getProductIdByName(currentDrink);  // Implement this method
@@ -285,11 +335,7 @@ public class CashierGUI extends JPanel {
             // Switch back to main screen
             panelSwitcher.show(mainPanel, "General Drinks");
         });
-        gbc.gridx = 0;
-        gbc.gridy++;
-        customizePanel.add(confirmButton, gbc);
 
-        addBackButton(customizePanel, "Specific Drink Selection");
         customizePanel.revalidate();
         customizePanel.repaint();
         panelSwitcher.show(mainPanel, "Customize Drink");
