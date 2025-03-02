@@ -12,28 +12,7 @@ import java.util.Random;
 
 /**
  * (Phase 4) TODO:
- * (1) Rewards Button
- * - be sure to first setLoggedInCustomerId (Line 413) then update their rewards
- * <p>
- * (2) BEAUTIFY THE DAMN THING
- * - add pictures to the drinks and stuff
- * <p>
- * (3) MAKE LAST SECOND CUSTOMIZATION POSSIBLE THROUGH CURRENT ORDER TAB
- * <p>
- * (4) Implement inventory deduction after customization panel
- * <p>
- * (5) Add a interface for the total price of all (custom) drink at the bottom and have each drink
- * show its price instead of purchase date
- * - make sure that price is on the very left
- * <p>
- * (6) check and fix if needed: toppingType null case (NONE or '')?
- * <p>
- * (7) Add like 2 or 3 out of the follow for phase (4) features:
- * - sales
- * - returns
- * - voids
- * - discards
- * - payment methods
+ * Check Pinned Google Docs
  */
 
 public class CashierGUI extends JPanel {
