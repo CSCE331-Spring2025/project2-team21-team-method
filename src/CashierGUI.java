@@ -222,6 +222,7 @@ public class CashierGUI extends JPanel {
             drinkButton.setVerticalTextPosition(SwingConstants.TOP);
             drinkButton.setHorizontalTextPosition(SwingConstants.CENTER);
             drinkButton.setIcon(icon);
+            // drinkButton.setBackground(new Color(162, 224, 229, 213));
 
             drinkButton.addActionListener(e -> showCustomizeDrink(drink));
             selectPanel.add(drinkButton);
@@ -317,6 +318,8 @@ public class CashierGUI extends JPanel {
 
     private static void addBackButton(JPanel panel, String previousPanel) {
         JButton backButton = new JButton("Back");
+        backButton.setFont(new Font("Arial", Font.BOLD, 24));
+        backButton.setBackground(new Color(227, 134, 116));
         backButton.addActionListener(e -> panelSwitcher.show(mainPanel, previousPanel));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 1;
