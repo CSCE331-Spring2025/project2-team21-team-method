@@ -235,12 +235,57 @@ public class ManagerGUI extends JPanel {
         JTextArea popularToppings = fetchMostPopularToppings(conn);
         JTextArea topCustomers = fetchTopCustomers(conn);
 
+        // ================================
+        // Sales Report GUI
+        // ================================
+        JTextField startDateField = new JTextField(10); 
+        JTextField endDateField = new JTextField(10); 
+        JButton filterButton = new JButton("Filter Sales");
+
+        // Text area for sales data
+        JTextArea salesByDateRange = new JTextArea();
+        salesByDateRange.setEditable(false);
+        salesByDateRange.setRows(5);
+
+        // Panel for date inputs and button
+        JPanel dateFilterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        dateFilterPanel.add(new JLabel("Start Date (YYYY-MM-DD):"));
+        dateFilterPanel.add(startDateField);
+        dateFilterPanel.add(new JLabel("End Date (YYYY-MM-DD):"));
+        dateFilterPanel.add(endDateField);
+        dateFilterPanel.add(filterButton);
+
+        // Add event listener for button click
+        filterButton.addActionListener(e -> {
+            String startDate = startDateField.getText().trim();
+            String endDate = endDateField.getText().trim();
+
+            if (!startDate.isEmpty() && !endDate.isEmpty()) {
+                JTextArea updatedSales = fetchSalesByDateRange(conn, startDate, endDate);
+                salesByDateRange.setText(updatedSales.getText());
+            } else {
+                String message = "Please enter correct start and end dates.";
+                salesByDateRange.setText(message);
+                JOptionPane.showMessageDialog(null, message, "Invalid Input", JOptionPane.WARNING_MESSAGE);
+            } // TODO: never gets called because of the logic error before this, in the function itself.
+        });
+
         addSectionToPanel(trendsPanel, "Weekly Sales History", weeklySales, gbc);
         addSectionToPanel(trendsPanel, "Realistic Sales History", realisticSales, gbc);
         addSectionToPanel(trendsPanel, "Peak Sales Day", peakSales, gbc);
         addSectionToPanel(trendsPanel, "Menu Item Inventory", menuInventory, gbc);
         addSectionToPanel(trendsPanel, "Most Popular Toppings", popularToppings, gbc);
         addSectionToPanel(trendsPanel, "Top Customers", topCustomers, gbc);
+        
+        // Add date filter panel
+        gbc.gridy++;
+        gbc.gridwidth = 2; // allow two columns for date filter panel
+        trendsPanel.add(dateFilterPanel, gbc);
+
+        // Add Sales Report section
+        gbc.gridy++;
+        addSectionToPanel(trendsPanel, "Sales by Date Ranges", salesByDateRange, gbc);
+
         return trendsPanel;
     }
 
@@ -368,6 +413,57 @@ public class ManagerGUI extends JPanel {
         }
         return textArea;
     }
+
+    /**
+     * Creates the logic for Sales Report, where I list out all drinks sales from a beginning date to the end of the provided date.
+     * 
+     * @param conn - Connection to the database.
+     * @param startDate - The first input date to beginning the search from this start date.
+     * @param endDate - The second input date to end the search from this end date.
+     * @return A text area formatted as a table to dislpay all products and its total cost, and quantity sold.
+     */
+    private static JTextArea fetchSalesByDateRange(Connection conn, String startDate, String endDate) {
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+    
+        String query =  "SELECT ct.product_id, p.product_name, p.product_type, " +
+                        "SUM(p.product_cost) AS total_cost, " +
+                        "COUNT(*) AS quantity_sold " +
+                        "FROM customer_transaction ct " +
+                        "JOIN product p ON ct.product_id = p.product_id " +
+                        "WHERE ct.purchase_date BETWEEN CAST(? AS DATE) AND CAST(? AS DATE) " +
+                        "GROUP BY ct.product_id, p.product_name, p.product_type";
+    
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            // Converting String date to SQL Date.
+            ps.setDate(1, java.sql.Date.valueOf(startDate)); 
+            ps.setDate(2, java.sql.Date.valueOf(endDate));   
+    
+            // Builds the text area as a table
+            try (ResultSet rs = ps.executeQuery()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Product ID | Product Name | Product Type | Total Cost | Quantity Sold\n");
+                sb.append("--------------------------------------------------------------\n");
+    
+                while (rs.next()) {
+                    sb.append(rs.getInt("product_id")).append(" | ")
+                      .append(rs.getString("product_name")).append(" | ")
+                      .append(rs.getString("product_type")).append(" | $")
+                      .append(String.format("%.2f", rs.getDouble("total_cost"))).append(" | ")
+                      .append(rs.getInt("quantity_sold")).append("\n");
+                }
+    
+                textArea.setText(sb.length() > 0 ? sb.toString() : "No sales data found for the selected date range.");
+            }
+        } catch (SQLException e) {
+            textArea.setText("Error retrieving sales data: " + e.getMessage());
+        } // TODO: never gets called or shown when I throw invalid arguments.
+    
+        return textArea;
+    }
+    
+
+    
 
     private static void buildInventoryTable(Connection conn, DefaultTableModel inventoryTableModel) {
         inventoryTableModel.setRowCount(0);
