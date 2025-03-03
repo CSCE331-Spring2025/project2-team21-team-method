@@ -16,7 +16,6 @@ import java.util.Random;
  * (Phase 4):
  * Check Pinned Google Docs
  */
-
 public class CashierGUI extends JPanel {
     private static DefaultTableModel currentTransactionModel;
     private static final List<TransactionData> currentTransactionList = new ArrayList<>();
@@ -137,7 +136,10 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Helper function
+     * Helper function to reset scroll position as a default setting
+     * 
+     * @param scrollPane - the scroll pane used to reset its position to a set
+     *                   default.
      */
     private static void resetScrollPosition(JScrollPane scrollPane) {
         SwingUtilities.invokeLater(() -> {
@@ -149,6 +151,14 @@ public class CashierGUI extends JPanel {
         });
     }
 
+    /**
+     * Executes SQL queries and gets columns from the tables.
+     * 
+     * @param query  - SQL query that will be executed
+     * @param params - optional parameter for variables.
+     * @return list of strings with first column values from the query.
+     *         If there was an error, an empty list is returned.
+     */
     private static ArrayList<String> getColVal(String query, String... params) {
         ArrayList<String> values = new ArrayList<>();
         try {
@@ -170,13 +180,18 @@ public class CashierGUI extends JPanel {
 
     /**
      * Getting drink type from database
+     * 
+     * @return column value from product_type
      */
     private static ArrayList<String> getDrinkTypesFromDB() {
         return getColVal("SELECT DISTINCT product_type FROM product");
     }
 
     /**
-     * Getting drink name from database
+     * Getting drink name from database.
+     * 
+     * @param drinkType - the drink type from product database
+     * @return column value from drinkType
      */
     private static ArrayList<String> getDrinksByType(String drinkType) {
         return getColVal("SELECT product_name FROM product WHERE product_type = ?", drinkType);
@@ -184,6 +199,8 @@ public class CashierGUI extends JPanel {
 
     /**
      * Getting customization options from database
+     * 
+     * @return all options from the database that is allowed for customization
      */
     private static ArrayList<String[]> getCustomizeOptions() {
         ArrayList<String[]> options = new ArrayList<>();
@@ -204,7 +221,9 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Setting up buttons for specific drinks
+     * Setting up buttons for specific drinks.
+     * 
+     * @param drinkType - the drink type from product database
      */
     private static void showSpecificDrinks(String drinkType) {
         selectPanel.removeAll();
@@ -237,6 +256,10 @@ public class CashierGUI extends JPanel {
 
     /**
      * Once drink has been selected, customization (milk & type, sugar & type, ice)
+     * Enables customization of the specific drink order by the customer. Generates
+     * the GUI and logic in the function
+     * 
+     * @param drink - drink name for customization.
      */
     private static void showCustomizeDrink(String drink) {
         customizePanel.removeAll();
@@ -349,7 +372,7 @@ public class CashierGUI extends JPanel {
 
             orderSummary.append("<h3>Total Cost: $").append(String.format("%.2f", totalCost)).append("</h3></html>");
 
-            // Show a confirm dialog 
+            // Show a confirm dialog
             int confirm = JOptionPane.showConfirmDialog(
                     null, orderSummary.toString(), "Confirm Order",
                     JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
@@ -373,6 +396,12 @@ public class CashierGUI extends JPanel {
         panelSwitcher.show(mainPanel, "Customize Drink");
     }
 
+    /**
+     * Creates the back button on the Cashier Grid GUI when ordering drinks.
+     * 
+     * @param panel         - used for the main panel
+     * @param previousPanel - uses the previous panel
+     */
     private static void addBackButton(JPanel panel, String previousPanel) {
         JButton backButton = new JButton("Back");
         backButton.setFont(new Font("Arial", Font.BOLD, 24));
@@ -387,7 +416,10 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Add getting the item id if the product is confirmed
+     * Get the product id if the product is confirmed, ensuring validation.
+     * 
+     * @param productName - name of the product from product database
+     * @return the product id from product database
      */
     private static int getProductIdByName(String productName) {
         String query = "SELECT product_id FROM product WHERE product_name = ?";
@@ -406,7 +438,10 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Get product price from database
+     * Get the product price from product database using queries.
+     * 
+     * @param productId - the id of the product from product database
+     * @return price of the product
      */
     private static double getProductPriceById(int productId) {
         String query = "SELECT product_cost FROM product WHERE product_id = ?";
@@ -439,6 +474,15 @@ public class CashierGUI extends JPanel {
     /**
      * Add an item to the current transaction but only show selected fields in the
      * GUI.
+     * 
+     * @param productId    - the id of the product
+     * @param orderId      - the id of the specific order
+     * @param customerId   - the id of the customer, if the customer added
+     *                     identification through phone number or email.
+     * @param purchaseDate - the date of when each order was purchased
+     * @param iceAmount    - the customers choice of the amount of ice
+     * @param toppingType  - all the choices of toppings the customer chose to add
+     *                     to their drink.
      */
     public static void addItemToTransaction(int productId, int orderId, int customerId, Timestamp purchaseDate,
             double iceAmount, String toppingType) {
@@ -457,6 +501,9 @@ public class CashierGUI extends JPanel {
 
     /**
      * Get customer transaction number to increment it (manual auto-increment)
+     * 
+     * @return an increment of the previous transaction number, by one so no
+     *         transaction number will be the same.
      */
     private static int getNextTransactionNumber() {
         int nextNum = 1; // default 1 if table is empty.
@@ -519,6 +566,9 @@ public class CashierGUI extends JPanel {
 
     /**
      * Fetch the product name based on product_id.
+     * 
+     * @param productId - the id of the product from product database.
+     * @return the name of the product based off the product_id
      */
     private static String getProductNameById(int productId) {
         String productName = "Unknown";
@@ -540,14 +590,21 @@ public class CashierGUI extends JPanel {
         return 10000 + new Random().nextInt(90000);
     }
 
+    // TODO: When setting up customer_rewards, be sure to use setLoggedInCustomerId
     /**
-     * TODO:
-     * When setting up customer_rewards, be sure to use setLoggedInCustomerId
+     * Set another variable as customerId
+     * 
+     * @param customerId - the id of the customer
      */
     public static void setLoggedInCustomerId(int customerId) {
         loggedInCustomerId = customerId;
     }
 
+    /**
+     * Get customer Id if they are logged in into the system before paying.
+     * 
+     * @return the customer's ID if logged in, otherwise a 0.
+     */
     private static int getCustomerId() {
         return loggedInCustomerId != -1 ? loggedInCustomerId : 0;
     }
@@ -556,7 +613,11 @@ public class CashierGUI extends JPanel {
     // Transaction Table Remove Button
     // ===============================================
 
-    // Displays the Remove Butotn
+    /**
+     * Creates the GUI for the Remove Button on the Transaction sidebar.
+     * 
+     * @author Sebastian Chu
+     */
     static class ButtonRenderer extends JButton implements TableCellRenderer {
         public ButtonRenderer() {
             setText("X");
@@ -572,7 +633,11 @@ public class CashierGUI extends JPanel {
         }
     }
 
-    // Button Remove from Table Logic
+    /**
+     * Creates the logic of the Remove button from the Transaction sidebar.
+     * 
+     * @author Sebastian Chu
+     */
     static class ButtonEditor extends DefaultCellEditor {
         private JButton button;
         private boolean isPushed;
@@ -611,11 +676,21 @@ public class CashierGUI extends JPanel {
             return button;
         }
 
+        /**
+         * When the button is clicked, change its value.
+         * 
+         * @return string 'X' when button is edited
+         */
         @Override
         public Object getCellEditorValue() {
             return "X";
         }
 
+        /**
+         * Disables editing of cell from the active table.
+         * 
+         * @return true if function editing was stopped, false otherwise
+         */
         @Override
         public boolean stopCellEditing() {
             isPushed = false;
