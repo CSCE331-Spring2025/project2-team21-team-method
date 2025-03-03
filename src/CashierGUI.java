@@ -10,14 +10,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-/**
+/*
  * (Phase 4):
  * Check Pinned Google Docs
  */
 
+/**
+ * @author Sebastian Chu, Zian Liang
+ * @version 1.0
+ */
 public class CashierGUI extends JPanel {
-    private static DefaultTableModel currentTransactionModel;
-    private static final List<TransactionData> currentTransactionList = new ArrayList<>();
+    static DefaultTableModel currentTransactionModel;
+    static final List<TransactionData> currentTransactionList = new ArrayList<>();
     private static int loggedInCustomerId = -1;
 
     private static JPanel mainPanel;
@@ -30,6 +34,10 @@ public class CashierGUI extends JPanel {
     private static String currentDrink;
     private static Connection conn = null;
 
+    /**
+     * @param conn
+     * @return nothing
+     */
     public CashierGUI(Connection conn) {
         CashierGUI.conn = conn;
         setLayout(new BorderLayout());
@@ -55,7 +63,6 @@ public class CashierGUI extends JPanel {
         ////////////////////////////////////// MAIN CONTENT SECTION ///////////////////////////////////
 
         // Main Content Panel (Right)
-
         // Main Panel for Drink Selection and Customization
         panelSwitcher = new CardLayout();
         mainPanel = new JPanel(panelSwitcher); //mainPanel2 will now host all the different panels
@@ -63,7 +70,7 @@ public class CashierGUI extends JPanel {
         JPanel mainInterPanel = new JPanel();
         mainInterPanel.setLayout(new GridLayout(4, 3, 20, 20));
 
-        /** Drink selection for general types of drink */
+        // Drink selection for general types of drink //
         ArrayList<String> drinkTypes = getDrinkTypesFromDB();
         for (String drinks : drinkTypes) {
             JButton drinkButton = new JButton(drinks);
@@ -72,6 +79,29 @@ public class CashierGUI extends JPanel {
             drinkButton.addActionListener(e -> showSpecificDrinks(drinks));
             mainInterPanel.add(drinkButton);
         }
+
+        // Customer ID button
+        JButton customerIdButton = new JButton("Customer ID");
+        customerIdButton.setPreferredSize(new Dimension(200, 50));
+        customerIdButton.setFont(new Font("Arial", Font.BOLD, 24));
+        customerIdButton.setBackground(new Color(255, 165, 0)); // Orange color
+        customerIdButton.setForeground(Color.WHITE);
+
+        customerIdButton.addActionListener(e -> {
+            String input = JOptionPane.showInputDialog(null, "Enter Customer ID:", "Customer Login", JOptionPane.QUESTION_MESSAGE);
+
+            if (input != null && !input.trim().isEmpty()) {
+                try {
+                    int customerId = Integer.parseInt(input.trim()); // Convert input to integer
+                    setLoggedInCustomerId(customerId); // Set the ID
+                    JOptionPane.showMessageDialog(null, "Customer ID set to: " + customerId, "Success", JOptionPane.INFORMATION_MESSAGE);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid ID. Please enter a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        mainInterPanel.add(customerIdButton);
 
         // mainPanel.add(mainInterPanel, "General Drinks");
 
@@ -115,7 +145,8 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Helper function
+     * @param scrollPane
+     * @return nothing
      */
     private static void resetScrollPosition(JScrollPane scrollPane) {
         SwingUtilities.invokeLater(() -> {
@@ -127,6 +158,11 @@ public class CashierGUI extends JPanel {
         });
     }
 
+    /**
+     * @param query
+     * @param params
+     * @return values
+     */
     private static ArrayList<String> getColVal(String query, String... params) {
         ArrayList<String> values = new ArrayList<>();
         try {
@@ -148,21 +184,22 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Getting drink type from database
+     * @return getColVal
      */
     private static ArrayList<String> getDrinkTypesFromDB() {
         return getColVal("SELECT DISTINCT product_type FROM product");
     }
 
     /**
-     * Getting drink name from database
+     * @param drinkType
+     * @return getColVal
      */
     private static ArrayList<String> getDrinksByType(String drinkType) {
         return getColVal("SELECT product_name FROM product WHERE product_type = ?", drinkType);
     }
 
     /**
-     * Getting customization options from database
+     * @return options
      */
     private static ArrayList<String[]> getCustomizeOptions() {
         ArrayList<String[]> options = new ArrayList<>();
@@ -183,7 +220,7 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Setting up buttons for specific drinks
+     * @param drinkType
      */
     private static void showSpecificDrinks(String drinkType) {
         selectPanel.removeAll();
@@ -215,8 +252,7 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Once drink has been selected, customization (milk & type, sugar & type, ice)
-     * TODO: make this panel look nicer
+     * @param drink
      */
     private static void showCustomizeDrink(String drink) {
         customizePanel.removeAll();
@@ -341,6 +377,10 @@ public class CashierGUI extends JPanel {
         panelSwitcher.show(mainPanel, "Customize Drink");
     }
 
+    /**
+     * @param panel
+     * @param previousPanel
+     */
     private static void addBackButton(JPanel panel, String previousPanel) {
         JButton backButton = new JButton("Back");
         backButton.setFont(new Font("Arial", Font.BOLD, 24));
@@ -355,7 +395,8 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Add getting the item id if the product is confirmed
+     * @param productName
+     * @return productId
      */
     private static int getProductIdByName(String productName) {
         String query = "SELECT product_id FROM product WHERE product_name = ?";
@@ -375,7 +416,12 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Add an item to the current transaction but only show selected fields in the GUI.
+     * @param productId
+     * @param orderId
+     * @param customerId
+     * @param purchaseDate
+     * @param iceAmount
+     * @param toppingType
      */
     public static void addItemToTransaction(int productId, int orderId, int customerId, Timestamp purchaseDate, double iceAmount, String toppingType) {
         String productName = getProductNameById(productId);
@@ -388,7 +434,7 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Get customer transaction number to increment it (manual auto-increment)
+     * @return nextNum
      */
     private static int getNextTransactionNumber() {
         int nextNum = 1; // default 1 if table is empty.
@@ -407,7 +453,7 @@ public class CashierGUI extends JPanel {
         return nextNum;
     }
 
-    /**
+    /*
      * Finalize the transaction and insert it into the customer_transaction table.
      */
     private static void finalizeTransaction() {
@@ -441,6 +487,7 @@ public class CashierGUI extends JPanel {
 
             // Clear transaction list & UI
             currentTransactionModel.setRowCount(0);
+            setLoggedInCustomerId(0);
             currentTransactionList.clear();
 
         }
@@ -450,7 +497,8 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Fetch the product name based on product_id.
+     * @param productId
+     * @return
      */
     private static String getProductNameById(int productId) {
         String productName = "Unknown";
@@ -474,13 +522,15 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * TODO:
-     * When setting up customer_rewards, be sure to use setLoggedInCustomerId
+     * @param customerId
      */
     public static void setLoggedInCustomerId(int customerId) {
         loggedInCustomerId = customerId;
     }
 
+    /**
+     * @return loggedInCustomerID
+     */
     private static int getCustomerId() {
         return loggedInCustomerId != -1 ? loggedInCustomerId : 0;
     }

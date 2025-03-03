@@ -211,8 +211,32 @@ public class ManagerGUI extends JPanel {
         });
         modifyItemsPanel.add(deleteButton);
 
-        orderPanel.add(inventoryTableScrollPane, BorderLayout.CENTER);
-        orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
+        // New wrapper panel to permanently show the Modify Inventory section and buttons
+        JPanel wrapperPanel = new JPanel();
+        wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.Y_AXIS));
+        wrapperPanel.add(inventoryTableScrollPane);
+        wrapperPanel.add(modifyItemsPanel);
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+
+        /// Button for closing business and Z-report generation ///
+        JButton closeBusinessButton = new JButton("Close Business Day");
+        closeBusinessButton.setFont(new Font("Arial", Font.BOLD, 18));
+        closeBusinessButton.setBackground(new Color(200, 0, 0));
+        closeBusinessButton.setForeground(Color.WHITE);
+        closeBusinessButton.addActionListener(e -> closeBusinessWorkflow(conn));
+        /// Button Done ///
+
+        bottomPanel.add(closeBusinessButton);
+
+        // previous code with previous alignment for Modify Inventory
+//        orderPanel.add(inventoryTableScrollPane, BorderLayout.CENTER);
+//        orderPanel.add(modifyItemsPanel, BorderLayout.SOUTH);
+//        orderPanel.add(closeBusinessButton, BorderLayout.SOUTH); // Last possible button
+        orderPanel.setLayout(new BorderLayout());
+        orderPanel.add(wrapperPanel, BorderLayout.CENTER);
+        orderPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
     private static JPanel buildTrendsPanel(Connection conn) {
@@ -238,8 +262,8 @@ public class ManagerGUI extends JPanel {
         // ================================
         // Sales Report GUI
         // ================================
-        JTextField startDateField = new JTextField(10); 
-        JTextField endDateField = new JTextField(10); 
+        JTextField startDateField = new JTextField(10);
+        JTextField endDateField = new JTextField(10);
         JButton filterButton = new JButton("Filter Sales");
 
         // Text area for sales data
@@ -276,7 +300,7 @@ public class ManagerGUI extends JPanel {
         addSectionToPanel(trendsPanel, "Menu Item Inventory", menuInventory, gbc);
         addSectionToPanel(trendsPanel, "Most Popular Toppings", popularToppings, gbc);
         addSectionToPanel(trendsPanel, "Top Customers", topCustomers, gbc);
-        
+
         // Add date filter panel
         gbc.gridy++;
         gbc.gridwidth = 2; // allow two columns for date filter panel
@@ -289,7 +313,9 @@ public class ManagerGUI extends JPanel {
         return trendsPanel;
     }
 
-
+    /**
+     * Adds a section to the trends grid with headers for each section
+     */
     private static void addSectionToPanel(JPanel panel, String title, JTextArea textArea, GridBagConstraints gbc) {
         JLabel headerLabel = new JLabel(title);
         headerLabel.setFont(new Font("Arial", Font.BOLD, 14));
@@ -416,7 +442,7 @@ public class ManagerGUI extends JPanel {
 
     /**
      * Creates the logic for Sales Report, where I list out all drinks sales from a beginning date to the end of the provided date.
-     * 
+     *
      * @param conn - Connection to the database.
      * @param startDate - The first input date to beginning the search from this start date.
      * @param endDate - The second input date to end the search from this end date.
@@ -425,7 +451,7 @@ public class ManagerGUI extends JPanel {
     private static JTextArea fetchSalesByDateRange(Connection conn, String startDate, String endDate) {
         JTextArea textArea = new JTextArea();
         textArea.setEditable(false);
-    
+
         String query =  "SELECT ct.product_id, p.product_name, p.product_type, " +
                         "SUM(p.product_cost) AS total_cost, " +
                         "COUNT(*) AS quantity_sold " +
@@ -433,18 +459,18 @@ public class ManagerGUI extends JPanel {
                         "JOIN product p ON ct.product_id = p.product_id " +
                         "WHERE ct.purchase_date BETWEEN CAST(? AS DATE) AND CAST(? AS DATE) " +
                         "GROUP BY ct.product_id, p.product_name, p.product_type";
-    
+
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             // Converting String date to SQL Date.
-            ps.setDate(1, java.sql.Date.valueOf(startDate)); 
-            ps.setDate(2, java.sql.Date.valueOf(endDate));   
-    
+            ps.setDate(1, java.sql.Date.valueOf(startDate));
+            ps.setDate(2, java.sql.Date.valueOf(endDate));
+
             // Builds the text area as a table
             try (ResultSet rs = ps.executeQuery()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("Product ID | Product Name | Product Type | Total Cost | Quantity Sold\n");
                 sb.append("--------------------------------------------------------------\n");
-    
+
                 while (rs.next()) {
                     sb.append(rs.getInt("product_id")).append(" | ")
                       .append(rs.getString("product_name")).append(" | ")
@@ -452,18 +478,18 @@ public class ManagerGUI extends JPanel {
                       .append(String.format("%.2f", rs.getDouble("total_cost"))).append(" | ")
                       .append(rs.getInt("quantity_sold")).append("\n");
                 }
-    
+
                 textArea.setText(sb.length() > 0 ? sb.toString() : "No sales data found for the selected date range.");
             }
         } catch (SQLException e) {
             textArea.setText("Error retrieving sales data: " + e.getMessage());
         } // TODO: never gets called or shown when I throw invalid arguments.
-    
+
         return textArea;
     }
-    
 
-    
+
+
 
     private static void buildInventoryTable(Connection conn, DefaultTableModel inventoryTableModel) {
         inventoryTableModel.setRowCount(0);
@@ -1405,5 +1431,82 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    // Z-report pre-req
+    private static void closeBusinessWorkflow(Connection conn) {
+        String report = generateZReport(conn);
 
+        int confirm = JOptionPane.showConfirmDialog(null, report + "\n\nConfirm close of business?",
+                "Close Business Day", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                resetXReport();
+
+                JOptionPane.showMessageDialog(null, "Business day over. Shutting down...");
+                System.exit(0);
+            } catch (Exception e){
+                JOptionPane.showMessageDialog(null, "Error closing business: " + e.getMessage());
+            }
+        }
+    }
+
+    private static void resetXReport() {
+        clearTransactions();
+    }
+
+    public static void clearTransactions() {
+        CashierGUI.currentTransactionList.clear();
+        CashierGUI.currentTransactionModel.setRowCount(0);
+    }
+
+    /* TODO: Add more queries for more results */
+    private static String generateZReport(Connection conn) {
+        StringBuilder report = new StringBuilder("Z-Report - Daily Sales Summary\n");
+
+        try {
+            // Daily sale total
+            String salesQuery = "SELECT SUM(p.product_cost) AS total_sales FROM customer_transaction ct " +
+                    "JOIN product p ON ct.product_id = p.product_id WHERE DATE(ct.purchase_date) = CURRENT_DATE";
+            PreparedStatement ps = conn.prepareStatement(salesQuery);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                report.append("Total Sales: $").append(rs.getDouble("total_sales")).append("\n");
+            }
+
+            // All of today's transaction
+            String transactionsQuery = "SELECT COUNT(*) AS total_orders FROM customer_transaction WHERE DATE(purchase_date) = CURRENT_DATE";
+            ps = conn.prepareStatement(transactionsQuery);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                report.append("Total Transactions: ").append(rs.getInt("total_orders")).append("\n");
+            }
+
+            // Today's most popular item
+            String topItemQuery = "SELECT p.product_name, COUNT(*) AS order_count FROM customer_transaction ct " +
+                    "JOIN product p ON ct.product_id = p.product_id WHERE DATE(ct.purchase_date) = CURRENT_DATE " +
+                    "GROUP BY p.product_name ORDER BY order_count DESC LIMIT 1";
+            ps = conn.prepareStatement(topItemQuery);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                report.append("Most Sold Item: ").append(rs.getString("product_name"))
+                        .append(" (").append(rs.getInt("order_count")).append(" orders)\n");
+            }
+
+        } catch (SQLException e) {
+            return "Error generating Z-Report: " + e.getMessage();
+        }
+
+        return report.toString();
+    }
+
+    private static void logBusinessClosure(Connection conn) {
+        try {
+            String logQuery = "INSERT INTO business_closure_log (closure_date, closure_status) VALUES (CURRENT_TIMESTAMP, 'Closed')";
+            PreparedStatement ps = conn.prepareStatement(logQuery);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error logging business closure: " + e.getMessage());
+        }
+    }
 }
