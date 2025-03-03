@@ -631,6 +631,10 @@ public class CashierGUI extends JPanel {
      */
     public static void setLoggedInCustomerId(int customerId) {
         loggedInCustomerId = customerId;
+
+        for (TransactionData transaction : currentTransactionList) {
+            transaction.customerId = customerId;
+        }
     }
 
     /**
