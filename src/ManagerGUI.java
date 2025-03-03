@@ -6,6 +6,9 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
+/**
+ * @author eshaansaini
+ */
 public class ManagerGUI extends JPanel {
     public ManagerGUI(Connection conn) {
         //JFrame managerDashboard = new JFrame("Manager Dashboard");
@@ -59,6 +62,13 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    /**
+     * Builds the Inventory Panel for the Manager
+     * @param conn Connection for the Database
+     * @param orderPanel The panel that contains the inventory table
+     * @return nothing
+     *
+     */
     private static void buildOrderPanel(Connection conn, JPanel orderPanel) {
         DefaultTableModel inventoryTableModel = new DefaultTableModel(new String[]{"Item ID", "Item Name", "Amount Left"}, 0);
         JTable inventoryTable = new JTable(inventoryTableModel);
@@ -234,9 +244,7 @@ public class ManagerGUI extends JPanel {
         return trendsPanel;
     }
 
-    /**
-     * Adds a section to the trends grid with headers for each section
-     */
+
     private static void addSectionToPanel(JPanel panel, String title, JTextArea textArea, GridBagConstraints gbc) {
         JLabel headerLabel = new JLabel(title);
         headerLabel.setFont(new Font("Arial", Font.BOLD, 14));
@@ -825,6 +833,7 @@ public class ManagerGUI extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(3,3,3,3);
 
+        modifyProductsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         // Text fields for product ID, name, cost, and type
         JTextField idField = new JTextField(3);
         JTextField nameField = new JTextField(20);
@@ -834,8 +843,8 @@ public class ManagerGUI extends JPanel {
         // Add labels and fields to the modifyProductsPanel
         JLabel prodLabel = new JLabel("Product ID:");
         JLabel prodName = new JLabel("Name:");
-        JLabel prodCost = new JLabel("Cost:");
-        JLabel prodType = new JLabel("Type:");
+        JLabel prodCost = new JLabel("Product Cost:");
+        JLabel prodType = new JLabel("Product Type:");
         gbc.gridx =0;
         gbc.gridy =0;
         modifyProductsPanel.add(prodLabel, gbc);
@@ -979,9 +988,205 @@ public class ManagerGUI extends JPanel {
         });
         modifyProductsPanel.add(updateButton);
 
+        JPanel modifyItemsPanel = new JPanel(new GridBagLayout());
+        modifyItemsPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),"Modify Inventory",
+                TitledBorder.LEFT,TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
+        ));
+        modifyItemsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        //GridBagConstraints gbc = new GridBagConstraints();
+        // gbc.fill = GridBagConstraints.HORIZONTAL;
+        //gbc.insets = new Insets(3,3,3,3);
+
+        JTextField id = new JTextField(3);
+        JTextField prodId = new JTextField(20);
+        JTextField name = new JTextField(20);
+        JTextField amount = new JTextField(5);
+        JTextField transactionId = new JTextField(10);
+
+        JLabel idLabel = new JLabel("Item Id:");
+        JLabel nameLabel = new JLabel("Item Name:");
+        JLabel amountLabel = new JLabel("Item Amount");
+        JLabel transactionLabel = new JLabel("Transaction ID");
+        //JLabel prodLabel1 = new JLabel("Product Id:");
+
+        gbc.gridx =0;
+        gbc.gridy =0;
+        modifyItemsPanel.add(idLabel, gbc);
+        gbc.gridx =1;
+        modifyItemsPanel.add(id,gbc);
+
+        gbc.gridx =0;
+        gbc.gridy =1;
+        modifyItemsPanel.add(nameLabel, gbc);
+        gbc.gridx =1;
+        modifyItemsPanel.add(name,gbc);
+
+        gbc.gridx =2;
+        gbc.gridy =0;
+        modifyItemsPanel.add(amountLabel, gbc);
+        gbc.gridx =3;
+        modifyItemsPanel.add(amount,gbc);
+
+        gbc.gridx =2;
+        gbc.gridy =1;
+        modifyItemsPanel.add(transactionLabel, gbc);
+        gbc.gridx =3;
+        modifyItemsPanel.add(transactionId,gbc);
+
+
+
+        JButton addButton = new JButton("INSERT");
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String tempId = id.getText().trim();
+                String tempName = name.getText().trim();
+                String tempAmount = amount.getText().trim();
+                String tempTransactionId = transactionId.getText().trim();
+
+                if (tempId.isEmpty() || tempName.isEmpty() || tempAmount.isEmpty() || tempTransactionId.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Please fill all fields (Id, Name, Amount, Transaction ID");
+                    return;
+                }
+                int numId = Integer.parseInt(tempId);
+                int numAmount = Integer.parseInt(tempAmount);
+                int numTransactionId = Integer.parseInt(tempTransactionId);
+
+
+                // should I add checks for empty and value checking ?
+
+                insertValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
+                //buildInventoryTable(conn, inventoryTableModel);
+
+            }
+        });
+        modifyItemsPanel.add(addButton);
+
+        JButton updateButton1 = new JButton("UPDATE");
+        updateButton1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String tempId = id.getText().trim();
+                String tempName = name.getText().trim();
+                String tempAmount = amount.getText().trim();
+                String tempTransactionId = transactionId.getText().trim();
+                if (tempId.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Please the ID field.");
+                    return;
+                }
+                int numId = Integer.parseInt(tempId);
+                int numAmount = -1;
+                int numTransactionId = -1;
+                if (!tempAmount.isEmpty()) {
+                    numAmount = Integer.parseInt(tempAmount);
+                }
+                if (!tempTransactionId.isEmpty()) {
+                    numTransactionId = Integer.parseInt(tempTransactionId);
+                }
+                // should I add checks for empty and value checking ?
+                updateValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
+                //buildInventoryTable(conn, productTableModel);
+                //buildInventoryTable(conn, inventoryTableModel);
+            }
+        });
+        modifyItemsPanel.add(updateButton1);
+
+
+        // this is the menu inventory part GAHHAHHHA
+        JPanel modifyMenuInventoryPanel = new JPanel(new GridBagLayout());
+        modifyMenuInventoryPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),"Modify Menu Inventory Table",
+                TitledBorder.LEFT,TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
+        ));
+        modifyMenuInventoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel itemIdLabel = new JLabel("Item Id's:");
+        JLabel quantityLabel = new JLabel("Amount per Item");
+        JLabel headingLabel = new JLabel("Please separate each value for the Items and Amounts field with a comma");
+        JLabel prodLabel1 = new JLabel("Product Id:");
+
+        JTextField items = new JTextField(30);
+        JTextField quantities = new JTextField(30);
+        JTextField prodId1 = new JTextField(5);
+
+        gbc.gridx =0;
+        gbc.gridy =0;
+        modifyMenuInventoryPanel.add(headingLabel, gbc);
+
+        gbc.gridx =0;
+        gbc.gridy =1;
+        modifyMenuInventoryPanel.add(prodLabel1, gbc);
+        gbc.gridx =1;
+        modifyMenuInventoryPanel.add(prodId1, gbc);
+
+        gbc.gridx =0;
+        gbc.gridy =2;
+        modifyMenuInventoryPanel.add(itemIdLabel, gbc);
+        gbc.gridx =1;
+        modifyMenuInventoryPanel.add(items, gbc);
+
+        gbc.gridx =0;
+        gbc.gridy =3;
+        modifyMenuInventoryPanel.add(quantityLabel, gbc);
+        gbc.gridx =1;
+        modifyMenuInventoryPanel.add(quantities, gbc);
+
+        //change here
+        JButton addButtonMenu = new JButton("INSERT");
+        addButtonMenu.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String tempProdId = prodId1.getText().trim();
+                String tempItems = items.getText().trim();
+                String tempQuantity = quantities.getText().trim();
+
+
+                if (tempProdId.isEmpty() || tempItems.isEmpty() || tempQuantity.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Please fill all fields");
+                    return;
+                }
+
+                String [] tempItemsArray = tempItems.split(",");
+                String [] tempQuantArray = tempQuantity.split(",");
+
+                int [] itemsArray = new int[tempItemsArray.length];
+                int [] quantityArray = new int[tempQuantArray.length];
+
+                int numId = Integer.parseInt(tempProdId);
+
+                for(int i = 0 ; i < tempItemsArray.length;i++){
+                    itemsArray[i] = Integer.parseInt(tempItemsArray[i].trim());
+                    quantityArray[i] = Integer.parseInt(tempQuantArray[i].trim());
+                    insertValueIntoMenuTable(conn, numId, itemsArray[i], quantityArray[i]);
+                }
+                JOptionPane.showMessageDialog(null, "Product and its respective menu items inserted successfully!");
+            }
+        });
+        modifyMenuInventoryPanel.add(addButtonMenu);
+
+
+
+
+
         productPanel.setLayout(new BorderLayout());
-        productPanel.add(productTableScrollPane, BorderLayout.CENTER);
+        /*productPanel.add(productTableScrollPane, BorderLayout.CENTER);
         productPanel.add(modifyProductsPanel, BorderLayout.SOUTH);
+         */
+        JPanel containerPanel = new JPanel();
+        containerPanel.setLayout(new BoxLayout(containerPanel, BoxLayout.Y_AXIS));
+        containerPanel.add(modifyProductsPanel);
+        containerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        containerPanel.add(modifyItemsPanel);
+        containerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        containerPanel.add(modifyMenuInventoryPanel);
+
+
+        productPanel.add(productTableScrollPane, BorderLayout.CENTER);
+        productPanel.add(containerPanel, BorderLayout.SOUTH);
+
     }
 
     private static void buildProductTable(Connection conn, DefaultTableModel productTableModel) {
@@ -1086,6 +1291,21 @@ public class ManagerGUI extends JPanel {
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error loading tracking table: " + e.getMessage());
+        }
+    }
+    private static void insertValueIntoMenuTable(Connection conn, int prodId, int itemId, int quantity){
+        {
+            String insertSQL = "INSERT INTO menu_item_inventory (product_id, item_id, quantity_used) VALUES (?, ?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(insertSQL)) {
+                ps.setInt(1, prodId);
+                ps.setInt(2, itemId);
+                ps.setInt(3, quantity);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null,
+                        "Error inserting product: " + e.getMessage()
+                );
+            }
         }
     }
 
