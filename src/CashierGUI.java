@@ -24,6 +24,9 @@ import java.util.Random;
 public class CashierGUI extends JPanel {
     static DefaultTableModel currentTransactionModel;
     static final List<TransactionData> currentTransactionList = new ArrayList<>();
+    private static ArrayList<String> selectedToppings = new ArrayList<>(); //unsure if this is needed
+    private static HashMap<String, Integer> selectedCustomizations = new HashMap<>();
+
     private static int loggedInCustomerId = -1;
 
     private static JPanel mainPanel;
@@ -57,7 +60,7 @@ public class CashierGUI extends JPanel {
 
         // Table to Show Current Transaction (Only Visible Fields and Remove Button)
         currentTransactionModel = new DefaultTableModel(
-                new String[] { "Product Name", "Product Price", "Ice Amount", "Topping Type", "Remove Item" }, 0);
+                new String[] { "Name", "Price", "Ice Amount", "Toppings", "Remove Item" }, 0);
         JTable transactionTable = new JTable(currentTransactionModel);
         JScrollPane transactionScrollPane = new JScrollPane(transactionTable);
         transactionTable.getColumn("Remove Item").setCellRenderer(new ButtonRenderer());
@@ -164,7 +167,10 @@ public class CashierGUI extends JPanel {
         add(mainPanel, BorderLayout.CENTER);
 
         // Pay Button Action
-        payButton.addActionListener(e -> finalizeTransaction());
+        payButton.addActionListener(e -> {
+            decrementInventory();
+            finalizeTransaction();
+        });
     }
 
     /**
@@ -345,7 +351,7 @@ public class CashierGUI extends JPanel {
         customizePanel.add(new JLabel("Toppings"), gbc);
 
         gbc.gridy++;
-        String[] toppings = { "Boba", "Aloe Vera", "Red Bean", "Popping Boba", "None" };
+        String[] toppings = { "Boba", "Aloe Vera", "Red Bean", "Popping Boba" };
         HashMap<String, JCheckBox> toppingCheckboxes = new HashMap<>();
 
         for (String topping : toppings) {
@@ -368,6 +374,12 @@ public class CashierGUI extends JPanel {
                 String value = entry.getValue().getText().trim();
 
                 if (!value.isEmpty() && !value.equals("0")) {
+                    // Store selectedCustomizations 
+                    int quantity = Integer.parseInt(value);
+                    selectedCustomizations.put(optionName, quantity);
+        
+        
+
                     orderSummary.append(optionName).append(": ").append(value).append("<br>");
                     hasCustomizations = true;
 
@@ -380,7 +392,7 @@ public class CashierGUI extends JPanel {
                 }
             }
 
-            ArrayList<String> selectedToppings = new ArrayList<>();
+            // ArrayList<String> selectedToppings = new ArrayList<>(); // needed to be global for decrementing inventory
             for (Map.Entry<String, JCheckBox> entry : toppingCheckboxes.entrySet()) {
                 if (entry.getValue().isSelected()) {
                     selectedToppings.add(entry.getKey());
@@ -554,6 +566,136 @@ public class CashierGUI extends JPanel {
     }
 
     /**
+     * Get inventory id by name.
+     * 
+     * @param inventoryName the name of the item in 
+     * @return
+     */
+    private static int getInventoryItemIdByName(String inventoryName) {
+        String query = "SELECT item_id FROM inventory WHERE item_name = ?";
+        int itemId = -1; // Default if not found
+    
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, inventoryName);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                itemId = rs.getInt("item_id");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching inventory ID: " + e.getMessage());
+        }
+        return itemId;
+    }
+    
+
+    /**
+     * Decrementing function for all items in inventory during the finalized transaction.
+     * 
+     * This function makes sure that the inventory decrements when items are bought, using 
+     * menu_item_inventory to link the inventory and customer_transaction table together. 
+     */
+    private static void decrementInventory() {
+        try {
+            if (currentTransactionList.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No finalized transactions to update inventory.");
+                return;
+            }
+    
+            // Prepare statements for inventory update
+            String menuItemQuery = "SELECT item_id, quantity_used FROM menu_item_inventory WHERE product_id = ?";
+            String checkInventoryQuery = "SELECT amount FROM inventory WHERE item_id = ?";
+            String updateInventoryQuery = "UPDATE inventory SET amount = amount - ? WHERE item_id = ?";
+            
+            PreparedStatement menuItemStmt = conn.prepareStatement(menuItemQuery);
+            PreparedStatement checkInventoryStmt = conn.prepareStatement(checkInventoryQuery);
+            PreparedStatement updateInventoryStmt = conn.prepareStatement(updateInventoryQuery);
+            
+            // Loop through all selected customizations to decrement from inventory
+            for (Map.Entry<String, Integer> entry : selectedCustomizations.entrySet()) {
+                String customizedName = entry.getKey();
+                int quantityToSubtract = entry.getValue(); // The total quantity to subtract
+    
+                int itemId = getInventoryItemIdByName(customizedName);
+                if (itemId == -1) {
+                    JOptionPane.showMessageDialog(null, "Inventory item not found: " + customizedName);
+                    continue; // skip
+                }
+    
+                checkInventoryStmt.setInt(1, itemId);
+                ResultSet inventoryRs = checkInventoryStmt.executeQuery();
+    
+                if (inventoryRs.next()) {
+                    int availableAmount = inventoryRs.getInt("amount");
+    
+                    // Check for enough inventory
+                    if (availableAmount >= quantityToSubtract) {
+                        // Decrement inventory
+                        updateInventoryStmt.setInt(1, quantityToSubtract);
+                        updateInventoryStmt.setInt(2, itemId);
+                        updateInventoryStmt.addBatch();
+                    } else {
+                        JOptionPane.showMessageDialog(null,
+                                "Insufficient inventory for " + customizedName +
+                                        ". Available: " + availableAmount + ", Needed: " + quantityToSubtract);
+                        return; // skip
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Item ID: " + itemId + " not found in inventory.");
+                    continue; // skip 
+                }
+            }
+
+            // Loops through all transaction items and decrements items from inventory
+            for (TransactionData transaction : currentTransactionList) {
+                int productId = transaction.productId;
+    
+                // Get the menu item inventory details
+                menuItemStmt.setInt(1, productId);
+                ResultSet menuItemRs = menuItemStmt.executeQuery();
+                
+                while (menuItemRs.next()) {
+                    int itemId = menuItemRs.getInt("item_id");
+                    int quantityUsed = menuItemRs.getInt("quantity_used");
+    
+                    checkInventoryStmt.setInt(1, itemId);
+                    ResultSet inventoryRs = checkInventoryStmt.executeQuery();
+                    
+                    if (inventoryRs.next()) {
+                        int availableAmount = inventoryRs.getInt("amount");
+                        
+                        // Check for enough inventory
+                        if (availableAmount >= quantityUsed) {
+                            // Update inventory
+                            updateInventoryStmt.setInt(1, quantityUsed);
+                            updateInventoryStmt.setInt(2, itemId);
+                            updateInventoryStmt.addBatch();
+                        } else {
+                            JOptionPane.showMessageDialog(null,
+                                    "Insufficient inventory for Item ID: " + itemId +
+                                            ". Available: " + availableAmount + ", Needed: " + quantityUsed);
+                            return; // Stop if inventory is too low
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Item ID: " + itemId + " not found in inventory.");
+                        return;
+                    }
+                }
+            }
+            
+            // Execute batch update
+            updateInventoryStmt.executeBatch();
+            JOptionPane.showMessageDialog(null, "Inventory updated successfully!");
+
+            // Reset selected toppings list for next order.
+            selectedToppings.clear();
+            selectedCustomizations.clear();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error updating inventory: " + e.getMessage());
+        }
+    }
+        
+            
+    /**
      * Finalize the transaction and insert it into the customer_transaction table.
      */
     private static void finalizeTransaction() {
@@ -623,7 +765,6 @@ public class CashierGUI extends JPanel {
         return 10000 + new Random().nextInt(90000);
     }
 
-    // TODO: When setting up customer_rewards, be sure to use setLoggedInCustomerId
     /**
      * Set another variable as customerId
      *
