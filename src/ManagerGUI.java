@@ -261,7 +261,7 @@ public class ManagerGUI extends JPanel {
         salesTable.setRowHeight(35);
         salesTable.setFont(new Font("Arial", Font.PLAIN, 14));
         salesTable.setShowGrid(true);
-        salesTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        salesTable.getTableHeader().setFont(new Font("Arial", Font.PLAIN, 14));
 
         salesTable.getColumnModel().getColumn(0).setPreferredWidth(200);  // Hour column
         salesTable.getColumnModel().getColumn(1).setPreferredWidth(80);   // Orders column
@@ -279,13 +279,13 @@ public class ManagerGUI extends JPanel {
         JLabel totalSalesLabel = new JLabel("Total Sales:");
         JLabel averageSaleLabel = new JLabel("Average Ticket:");
 
-        totalOrdersLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        totalOrdersLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         totalOrdersLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        totalSalesLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        totalSalesLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         totalSalesLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        averageSaleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        averageSaleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         averageSaleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         summaryPanel.add(totalOrdersLabel);
