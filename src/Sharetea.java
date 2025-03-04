@@ -8,7 +8,7 @@ import java.sql.SQLException;
 public class Sharetea {
     private static Connection conn = null;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         dbSetup my = new dbSetup();
         try {
             Class.forName("org.postgresql.Driver");
@@ -16,6 +16,7 @@ public class Sharetea {
                     my.user, my.pswd);
         }
         catch (Exception e) {
+            //noinspection CallToPrintStackTrace
             e.printStackTrace();
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);

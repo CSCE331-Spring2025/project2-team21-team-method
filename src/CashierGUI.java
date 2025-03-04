@@ -1,5 +1,4 @@
 import java.awt.*;
-import java.awt.event.*;
 import java.sql.*;
 import java.time.Instant;
 import javax.swing.*;
@@ -12,9 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-/**
- * (Phase 4):
- * Check Pinned Google Docs
+/*
+  (Phase 4):
+  Check Pinned Google Docs
  */
 
 /**
@@ -27,20 +26,16 @@ public class CashierGUI extends JPanel {
     private static int loggedInCustomerId = -1;
 
     private static JPanel mainPanel;
-    private static JScrollPane mainInterScrollPane;
     private static JPanel selectPanel;
     private static JScrollPane selectScrollPane;
     private static JPanel customizePanel;
-    private static JScrollPane customizeScrollPane;
     private static CardLayout panelSwitcher;
     private static String currentDrink;
     private static Connection conn = null;
     private static JLabel totalCostLabel;
-    private static double totalCost = 0.0;
 
     /**
-     * @param conn
-     * @return nothing
+     * @param conn the database connection
      */
     public CashierGUI(Connection conn) {
         CashierGUI.conn = conn;
@@ -57,7 +52,7 @@ public class CashierGUI extends JPanel {
 
         // Table to Show Current Transaction (Only Visible Fields and Remove Button)
         currentTransactionModel = new DefaultTableModel(
-                new String[] { "Product Name", "Product Price", "Ice Amount", "Topping Type", "Remove Item" }, 0);
+                new String[]{"Product Name", "Product Price", "Ice Amount", "Topping Type", "Remove Item"}, 0);
         JTable transactionTable = new JTable(currentTransactionModel);
         JScrollPane transactionScrollPane = new JScrollPane(transactionTable);
         transactionTable.getColumn("Remove Item").setCellRenderer(new ButtonRenderer());
@@ -122,7 +117,8 @@ public class CashierGUI extends JPanel {
                     int customerId = Integer.parseInt(input.trim()); // Convert input to integer
                     setLoggedInCustomerId(customerId); // Set the ID
                     JOptionPane.showMessageDialog(null, "Customer ID set to: " + customerId, "Success", JOptionPane.INFORMATION_MESSAGE);
-                } catch (NumberFormatException ex) {
+                }
+                catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(null, "Invalid ID. Please enter a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -132,7 +128,7 @@ public class CashierGUI extends JPanel {
 
         // mainPanel.add(mainInterPanel, "General Drinks");
 
-        mainInterScrollPane = new JScrollPane(mainInterPanel);
+        JScrollPane mainInterScrollPane = new JScrollPane(mainInterPanel);
         mainInterScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         mainInterScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         mainInterScrollPane.getVerticalScrollBar().setUnitIncrement(10);
@@ -154,7 +150,7 @@ public class CashierGUI extends JPanel {
         // mainPanel.add(customizePanel, "Customize Drink");
 
         customizePanel = new JPanel(new GridBagLayout());
-        customizeScrollPane = new JScrollPane(customizePanel);
+        JScrollPane customizeScrollPane = new JScrollPane(customizePanel);
         customizeScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         customizeScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         customizeScrollPane.getVerticalScrollBar().setUnitIncrement(10);
@@ -189,7 +185,7 @@ public class CashierGUI extends JPanel {
      * @param query  - SQL query that will be executed
      * @param params - optional parameter for variables.
      * @return list of strings with first column values from the query.
-     *         If there was an error, an empty list is returned.
+     * If there was an error, an empty list is returned.
      */
     private static ArrayList<String> getColVal(String query, String... params) {
         ArrayList<String> values = new ArrayList<>();
@@ -204,7 +200,8 @@ public class CashierGUI extends JPanel {
             }
             rs.close();
             stmt.close();
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Database error.");
         }
         return values;
@@ -241,11 +238,13 @@ public class CashierGUI extends JPanel {
                     .prepareStatement("SELECT item_name, amount FROM inventory WHERE item_id BETWEEN 22 AND 30;");
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                options.add(new String[] { rs.getString("item_name"), rs.getString("amount") });
+                options.add(new String[]{rs.getString("item_name"), rs.getString("amount")});
             }
             rs.close();
             stmt.close();
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
+            //noinspection CallToPrintStackTrace
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Database error.");
         }
@@ -345,7 +344,7 @@ public class CashierGUI extends JPanel {
         customizePanel.add(new JLabel("Toppings"), gbc);
 
         gbc.gridy++;
-        String[] toppings = { "Boba", "Aloe Vera", "Red Bean", "Popping Boba", "None" };
+        String[] toppings = {"Boba", "Aloe Vera", "Red Bean", "Popping Boba", "None"};
         HashMap<String, JCheckBox> toppingCheckboxes = new HashMap<>();
 
         for (String topping : toppings) {
@@ -399,8 +398,7 @@ public class CashierGUI extends JPanel {
 
             // Fetch the product price dynamically
             int productId = getProductIdByName(currentDrink);
-            double productPrice = getProductPriceById(productId);
-            double totalCost = productPrice; // You can also add additional costs for extras
+            double totalCost = getProductPriceById(productId);
 
             orderSummary.append("<h3>Total Cost: $").append(String.format("%.2f", totalCost)).append("</h3></html>");
 
@@ -463,7 +461,8 @@ public class CashierGUI extends JPanel {
             if (rs.next()) {
                 productId = rs.getInt("product_id");
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             System.err.println("Error fetching product ID: " + e.getMessage());
         }
         return productId;
@@ -485,7 +484,8 @@ public class CashierGUI extends JPanel {
             if (rs.next()) {
                 price = rs.getDouble("product_cost");
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             System.err.println("Error fetching product price: " + e.getMessage());
         }
         return price;
@@ -495,7 +495,7 @@ public class CashierGUI extends JPanel {
      * Updates the total cost display.
      */
     private static void updateTotalCost() {
-        totalCost = 0.0;
+        double totalCost = 0.0;
         for (TransactionData transaction : currentTransactionList) {
             double productPrice = getProductPriceById(transaction.productId); // Fetch price dynamically
             totalCost += productPrice;
@@ -517,7 +517,7 @@ public class CashierGUI extends JPanel {
      *                     to their drink.
      */
     public static void addItemToTransaction(int productId, int orderId, int customerId, Timestamp purchaseDate,
-            double iceAmount, String toppingType) {
+                                            double iceAmount, String toppingType) {
         String productName = getProductNameById(productId);
         double productPrice = getProductPriceById(productId);
 
@@ -526,7 +526,7 @@ public class CashierGUI extends JPanel {
                 new TransactionData(productId, orderId, customerId, productName, purchaseDate, iceAmount, toppingType));
 
         // Add only visible fields to the GUI
-        currentTransactionModel.addRow(new Object[] { productName, productPrice, iceAmount, toppingType, "Remove" });
+        currentTransactionModel.addRow(new Object[]{productName, productPrice, iceAmount, toppingType, "Remove"});
 
         updateTotalCost();
     }
@@ -535,18 +535,19 @@ public class CashierGUI extends JPanel {
      * Get customer transaction number to increment it (manual auto-increment)
      *
      * @return an increment of the previous transaction number, by one so no
-     *         transaction number will be the same.
+     * transaction number will be the same.
      */
     private static int getNextTransactionNumber() {
         int nextNum = 1; // default 1 if table is empty.
         String query = "SELECT MAX(customer_transaction_num) FROM customer_transaction";
 
         try (Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(query)) {
+             ResultSet rs = stmt.executeQuery(query)) {
             if (rs.next()) {
                 nextNum = rs.getInt(1) + 1;
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             System.err.println("Error fetching next transaction number: " + e.getMessage());
         }
 
@@ -592,7 +593,8 @@ public class CashierGUI extends JPanel {
 
             updateTotalCost(); // update total cost after pay button.
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error processing transaction: " + e.getMessage());
         }
     }
@@ -613,7 +615,8 @@ public class CashierGUI extends JPanel {
             if (rs.next()) {
                 productName = rs.getString("product_name");
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             System.err.println("Error fetching product name: " + e.getMessage());
         }
         return productName;
@@ -624,6 +627,7 @@ public class CashierGUI extends JPanel {
     }
 
     // TODO: When setting up customer_rewards, be sure to use setLoggedInCustomerId
+
     /**
      * Set another variable as customerId
      *
@@ -638,7 +642,7 @@ public class CashierGUI extends JPanel {
     }
 
     /**
-     * Get customer Id if they are logged in into the system before paying.
+     * Get customer id if they are logged in into the system before paying.
      *
      * @return the customer's ID if logged in, otherwise a 0.
      */
@@ -665,7 +669,7 @@ public class CashierGUI extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-                int row, int column) {
+                                                       int row, int column) {
             return this;
         }
     }
@@ -676,7 +680,7 @@ public class CashierGUI extends JPanel {
      * @author Sebastian Chu
      */
     static class ButtonEditor extends DefaultCellEditor {
-        private JButton button;
+        private final JButton button;
         private boolean isPushed;
         private int row; // Store the row index
 
@@ -707,7 +711,7 @@ public class CashierGUI extends JPanel {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
-                int column) {
+                                                     int column) {
             isPushed = true;
             this.row = row; // Store the row index
             return button;

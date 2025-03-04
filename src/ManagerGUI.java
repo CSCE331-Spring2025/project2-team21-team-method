@@ -1,14 +1,9 @@
 import java.awt.*;
-import java.awt.event.*;
 import java.sql.*;
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
-/**
- * @author eshaansaini
- */
 public class ManagerGUI extends JPanel {
     public ManagerGUI(Connection conn) {
         //JFrame managerDashboard = new JFrame("Manager Dashboard");
@@ -19,11 +14,13 @@ public class ManagerGUI extends JPanel {
                     break;
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // If Nimbus is not available, fall back to cross-platform
             try {
                 UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 // Not worth my time
             }
         }
@@ -64,10 +61,9 @@ public class ManagerGUI extends JPanel {
 
     /**
      * Builds the Inventory Panel for the Manager
-     * @param conn Connection for the Database
-     * @param orderPanel The panel that contains the inventory table
-     * @return nothing
      *
+     * @param conn       Connection for the Database
+     * @param orderPanel The panel that contains the inventory table
      */
     private static void buildOrderPanel(Connection conn, JPanel orderPanel) {
         DefaultTableModel inventoryTableModel = new DefaultTableModel(new String[]{"Item ID", "Item Name", "Amount Left"}, 0);
@@ -86,13 +82,13 @@ public class ManagerGUI extends JPanel {
         // creating an area where the manager can add update and delete items
         JPanel modifyItemsPanel = new JPanel(new GridBagLayout());
         modifyItemsPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),"Modify Inventory",
-                TitledBorder.LEFT,TitledBorder.TOP,
+                BorderFactory.createEtchedBorder(), "Modify Inventory",
+                TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
         ));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(3,3,3,3);
+        gbc.insets = new Insets(3, 3, 3, 3);
 
         JTextField id = new JTextField(3);
         JTextField name = new JTextField(20);
@@ -104,110 +100,101 @@ public class ManagerGUI extends JPanel {
         JLabel amountLabel = new JLabel("Item Amount");
         JLabel transactionLabel = new JLabel("Transaction ID");
 
-        gbc.gridx =0;
-        gbc.gridy =0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         modifyItemsPanel.add(idLabel, gbc);
-        gbc.gridx =1;
-        modifyItemsPanel.add(id,gbc);
+        gbc.gridx = 1;
+        modifyItemsPanel.add(id, gbc);
 
-        gbc.gridx =0;
-        gbc.gridy =1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         modifyItemsPanel.add(nameLabel, gbc);
-        gbc.gridx =1;
-        modifyItemsPanel.add(name,gbc);
+        gbc.gridx = 1;
+        modifyItemsPanel.add(name, gbc);
 
-        gbc.gridx =2;
-        gbc.gridy =0;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
         modifyItemsPanel.add(amountLabel, gbc);
-        gbc.gridx =3;
-        modifyItemsPanel.add(amount,gbc);
+        gbc.gridx = 3;
+        modifyItemsPanel.add(amount, gbc);
 
-        gbc.gridx =2;
-        gbc.gridy =1;
+        gbc.gridx = 2;
+        gbc.gridy = 1;
         modifyItemsPanel.add(transactionLabel, gbc);
-        gbc.gridx =3;
-        modifyItemsPanel.add(transactionId,gbc);
+        gbc.gridx = 3;
+        modifyItemsPanel.add(transactionId, gbc);
 
-        gbc.gridx =1;
+        gbc.gridx = 1;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
         JButton addButton = new JButton("ADD");
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempId = id.getText().trim();
-                String tempName = name.getText().trim();
-                String tempAmount = amount.getText().trim();
-                String tempTransactionId = transactionId.getText().trim();
-                if (tempId.isEmpty() || tempName.isEmpty() || tempAmount.isEmpty() || tempTransactionId.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please fill all fields (Id, Name, Amount, Transaction ID).");
-                    return;
-                }
-                int numId = Integer.parseInt(tempId);
-                int numAmount = Integer.parseInt(tempAmount);
-                int numTransactionId = Integer.parseInt(tempTransactionId);
-
-                // should I add checks for empty and value checking ?
-
-                insertValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
-                buildInventoryTable(conn, inventoryTableModel);
+        addButton.addActionListener(e -> {
+            String tempId = id.getText().trim();
+            String tempName = name.getText().trim();
+            String tempAmount = amount.getText().trim();
+            String tempTransactionId = transactionId.getText().trim();
+            if (tempId.isEmpty() || tempName.isEmpty() || tempAmount.isEmpty() || tempTransactionId.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please fill all fields (Id, Name, Amount, Transaction ID).");
+                return;
             }
+            int numId = Integer.parseInt(tempId);
+            int numAmount = Integer.parseInt(tempAmount);
+            int numTransactionId = Integer.parseInt(tempTransactionId);
+
+            // should I add checks for empty and value checking ?
+
+            insertValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
+            buildInventoryTable(conn, inventoryTableModel);
         });
         modifyItemsPanel.add(addButton);
 
         JButton updateButton = new JButton("UPDATE");
-        updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempId = id.getText().trim();
-                String tempName = name.getText().trim();
-                String tempAmount = amount.getText().trim();
-                String tempTransactionId = transactionId.getText().trim();
-                if (tempId.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please the ID field.");
-                    return;
-                }
-                int numId = Integer.parseInt(tempId);
-                int numAmount = -1;
-                int numTransactionId = -1;
-                if (!tempAmount.isEmpty()) {
-                    numAmount = Integer.parseInt(tempAmount);
-                }
-                if (!tempTransactionId.isEmpty()) {
-                    numTransactionId = Integer.parseInt(tempTransactionId);
-                }
-                // should I add checks for empty and value checking ?
-                updateValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
-                buildInventoryTable(conn, inventoryTableModel);
-                //buildInventoryTable(conn, inventoryTableModel);
+        updateButton.addActionListener(e -> {
+            String tempId = id.getText().trim();
+            String tempName = name.getText().trim();
+            String tempAmount = amount.getText().trim();
+            String tempTransactionId = transactionId.getText().trim();
+            if (tempId.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please the ID field.");
+                return;
             }
+            int numId = Integer.parseInt(tempId);
+            int numAmount = -1;
+            int numTransactionId = -1;
+            if (!tempAmount.isEmpty()) {
+                numAmount = Integer.parseInt(tempAmount);
+            }
+            if (!tempTransactionId.isEmpty()) {
+                numTransactionId = Integer.parseInt(tempTransactionId);
+            }
+            // should I add checks for empty and value checking ?
+            updateValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
+            buildInventoryTable(conn, inventoryTableModel);
+            //buildInventoryTable(conn, inventoryTableModel);
         });
         modifyItemsPanel.add(updateButton);
 
 
         JButton deleteButton = new JButton("DELETE");
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempId = id.getText().trim();
-                String tempAmount = amount.getText().trim();
-                String tempTransactionId = transactionId.getText().trim();
-                if (tempId.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please the ID field.");
-                    return;
-                }
-                int numId = Integer.parseInt(tempId);
-                int numAmount;
-                int numTransactionId;
-                if (!tempAmount.isEmpty()) {
-                    numAmount = Integer.parseInt(tempAmount);
-                }
-                if (!tempTransactionId.isEmpty()) {
-                    numTransactionId = Integer.parseInt(tempTransactionId);
-                }
-                deleteValueIntoDatabase(conn, numId);
-                buildInventoryTable(conn, inventoryTableModel);
+        deleteButton.addActionListener(e -> {
+            String tempId = id.getText().trim();
+            String tempAmount = amount.getText().trim();
+            String tempTransactionId = transactionId.getText().trim();
+            if (tempId.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please the ID field.");
+                return;
             }
+            int numId = Integer.parseInt(tempId);
+            int numAmount;
+            int numTransactionId;
+            if (!tempAmount.isEmpty()) {
+                numAmount = Integer.parseInt(tempAmount);
+            }
+            if (!tempTransactionId.isEmpty()) {
+                numTransactionId = Integer.parseInt(tempTransactionId);
+            }
+            deleteValueIntoDatabase(conn, numId);
+            buildInventoryTable(conn, inventoryTableModel);
         });
         modifyItemsPanel.add(deleteButton);
 
@@ -287,7 +274,8 @@ public class ManagerGUI extends JPanel {
             if (!startDate.isEmpty() && !endDate.isEmpty()) {
                 JTextArea updatedSales = fetchSalesByDateRange(conn, startDate, endDate);
                 salesByDateRange.setText(updatedSales.getText());
-            } else {
+            }
+            else {
                 String message = "Please enter correct start and end dates.";
                 salesByDateRange.setText(message);
                 JOptionPane.showMessageDialog(null, message, "Invalid Input", JOptionPane.WARNING_MESSAGE);
@@ -443,22 +431,22 @@ public class ManagerGUI extends JPanel {
     /**
      * Creates the logic for Sales Report, where I list out all drinks sales from a beginning date to the end of the provided date.
      *
-     * @param conn - Connection to the database.
+     * @param conn      - Connection to the database.
      * @param startDate - The first input date to beginning the search from this start date.
-     * @param endDate - The second input date to end the search from this end date.
+     * @param endDate   - The second input date to end the search from this end date.
      * @return A text area formatted as a table to dislpay all products and its total cost, and quantity sold.
      */
     private static JTextArea fetchSalesByDateRange(Connection conn, String startDate, String endDate) {
         JTextArea textArea = new JTextArea();
         textArea.setEditable(false);
 
-        String query =  "SELECT ct.product_id, p.product_name, p.product_type, " +
-                        "SUM(p.product_cost) AS total_cost, " +
-                        "COUNT(*) AS quantity_sold " +
-                        "FROM customer_transaction ct " +
-                        "JOIN product p ON ct.product_id = p.product_id " +
-                        "WHERE ct.purchase_date BETWEEN CAST(? AS DATE) AND CAST(? AS DATE) " +
-                        "GROUP BY ct.product_id, p.product_name, p.product_type";
+        String query = "SELECT ct.product_id, p.product_name, p.product_type, " +
+                "SUM(p.product_cost) AS total_cost, " +
+                "COUNT(*) AS quantity_sold " +
+                "FROM customer_transaction ct " +
+                "JOIN product p ON ct.product_id = p.product_id " +
+                "WHERE ct.purchase_date BETWEEN CAST(? AS DATE) AND CAST(? AS DATE) " +
+                "GROUP BY ct.product_id, p.product_name, p.product_type";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             // Converting String date to SQL Date.
@@ -473,22 +461,21 @@ public class ManagerGUI extends JPanel {
 
                 while (rs.next()) {
                     sb.append(rs.getInt("product_id")).append(" | ")
-                      .append(rs.getString("product_name")).append(" | ")
-                      .append(rs.getString("product_type")).append(" | $")
-                      .append(String.format("%.2f", rs.getDouble("total_cost"))).append(" | ")
-                      .append(rs.getInt("quantity_sold")).append("\n");
+                            .append(rs.getString("product_name")).append(" | ")
+                            .append(rs.getString("product_type")).append(" | $")
+                            .append(String.format("%.2f", rs.getDouble("total_cost"))).append(" | ")
+                            .append(rs.getInt("quantity_sold")).append("\n");
                 }
 
-                textArea.setText(sb.length() > 0 ? sb.toString() : "No sales data found for the selected date range.");
+                textArea.setText(!sb.isEmpty() ? sb.toString() : "No sales data found for the selected date range.");
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             textArea.setText("Error retrieving sales data: " + e.getMessage());
         } // TODO: never gets called or shown when I throw invalid arguments.
 
         return textArea;
     }
-
-
 
 
     private static void buildInventoryTable(Connection conn, DefaultTableModel inventoryTableModel) {
@@ -535,23 +522,24 @@ public class ManagerGUI extends JPanel {
 
         String query = "SELECT  item_name,amount,transaction_id FROM inventory where item_id = ?";
 
-        String prevName="";
-        int prevAmount=-1;
-        int prevTransaction=-1;
-        try(PreparedStatement ps = conn.prepareStatement(query)){
+        String prevName = "";
+        int prevAmount = -1;
+        int prevTransaction = -1;
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, id);
 
-            try(ResultSet rs = ps.executeQuery()){
-                if(rs.next()){
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
                     prevName = rs.getString(1);
                     prevAmount = rs.getInt(2);
                     prevTransaction = rs.getInt(3);
                 }
-                else{
+                else {
                     JOptionPane.showMessageDialog(null, "No item found with ID: " + id);
                 }
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error loading the inventory table: " + e.getMessage());
         }
         if (name.isEmpty()) {
@@ -601,7 +589,6 @@ public class ManagerGUI extends JPanel {
     }
 
 
-
     private static void buildEmployeePanel(Connection conn, JPanel employeePanel) {
         DefaultTableModel employeeTableModel = new DefaultTableModel(
                 new String[]{"Employee ID", "Employee Email", "Employee Phone", "Is Manager", "Social Security", "Employee Pay", "Bank Account"}, 0
@@ -619,17 +606,16 @@ public class ManagerGUI extends JPanel {
         employeeTable.setGridColor(Color.DARK_GRAY);
 
 
-
         // creating an area where the manager can add update and delete items
         JPanel modifyEmployeePanel = new JPanel(new GridBagLayout());
         modifyEmployeePanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),"Modify EmployeeInfo",
-                TitledBorder.LEFT,TitledBorder.TOP,
+                BorderFactory.createEtchedBorder(), "Modify EmployeeInfo",
+                TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
         ));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(3,3,3,3);
+        gbc.insets = new Insets(3, 3, 3, 3);
 
         JTextField employeeIdField = new JTextField(5);
         JTextField emailField = new JTextField(20);
@@ -648,124 +634,114 @@ public class ManagerGUI extends JPanel {
         JLabel bankLabel = new JLabel("Bank Account ID");
 
 
-
-        gbc.gridx =0;
-        gbc.gridy =0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         modifyEmployeePanel.add(idLabel, gbc);
-        gbc.gridx =1;
-        modifyEmployeePanel.add(employeeIdField,gbc);
+        gbc.gridx = 1;
+        modifyEmployeePanel.add(employeeIdField, gbc);
 
-        gbc.gridx =0;
-        gbc.gridy =1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         modifyEmployeePanel.add(emailLabel, gbc);
-        gbc.gridx =1;
-        modifyEmployeePanel.add(emailField,gbc);
+        gbc.gridx = 1;
+        modifyEmployeePanel.add(emailField, gbc);
 
-        gbc.gridx =2;
-        gbc.gridy =0;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
         modifyEmployeePanel.add(phoneLabel, gbc);
-        gbc.gridx =3;
-        modifyEmployeePanel.add(phoneField,gbc);
+        gbc.gridx = 3;
+        modifyEmployeePanel.add(phoneField, gbc);
 
-        gbc.gridx =2;
-        gbc.gridy =1;
+        gbc.gridx = 2;
+        gbc.gridy = 1;
         modifyEmployeePanel.add(socialLabel, gbc);
-        gbc.gridx =3;
-        modifyEmployeePanel.add(socialSecurityField,gbc);
+        gbc.gridx = 3;
+        modifyEmployeePanel.add(socialSecurityField, gbc);
 
-        gbc.gridx =4;
-        gbc.gridy =0;
+        gbc.gridx = 4;
+        gbc.gridy = 0;
         modifyEmployeePanel.add(payLabel, gbc);
-        gbc.gridx =5;
-        modifyEmployeePanel.add(payField,gbc);
+        gbc.gridx = 5;
+        modifyEmployeePanel.add(payField, gbc);
 
-        gbc.gridx =4;
-        gbc.gridy =1;
+        gbc.gridx = 4;
+        gbc.gridy = 1;
         modifyEmployeePanel.add(bankLabel, gbc);
-        gbc.gridx =5;
-        modifyEmployeePanel.add(bankAccountField,gbc);
+        gbc.gridx = 5;
+        modifyEmployeePanel.add(bankAccountField, gbc);
 
-        gbc.gridx =4;
-        gbc.gridy =2;
+        gbc.gridx = 4;
+        gbc.gridy = 2;
         modifyEmployeePanel.add(managerLabel, gbc);
-        gbc.gridx =5;
-        modifyEmployeePanel.add(isManagerCheck,gbc);
+        gbc.gridx = 5;
+        modifyEmployeePanel.add(isManagerCheck, gbc);
 
         JButton addButton = new JButton("ADD");
 
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempId = employeeIdField.getText().trim();
-                String tempEmail = emailField.getText().trim();
-                String tempPhone = phoneField.getText().trim();
-                String tempSSN = socialSecurityField.getText().trim();
-                String tempPay = payField.getText().trim();
-                String tempBankAccount = bankAccountField.getText().trim();
-                boolean isManager = isManagerCheck.isSelected();
+        addButton.addActionListener(e -> {
+            String tempId = employeeIdField.getText().trim();
+            String tempEmail = emailField.getText().trim();
+            String tempPhone = phoneField.getText().trim();
+            String tempSSN = socialSecurityField.getText().trim();
+            String tempPay = payField.getText().trim();
+            String tempBankAccount = bankAccountField.getText().trim();
+            boolean isManager = isManagerCheck.isSelected();
 
-                if (tempId.isEmpty() || tempEmail.isEmpty() || tempPhone.isEmpty() || tempSSN.isEmpty() || tempPay.isEmpty() || tempBankAccount.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please fill all fields.");
-                    return;
-                }
-
-                int employeeId = Integer.parseInt(tempId);
-                int empPhone = Integer.parseInt(tempPhone);
-                int socialSecurity = Integer.parseInt(tempSSN);
-                double empPay = Double.parseDouble(tempPay);
-                int empBankAccount = Integer.parseInt(tempBankAccount);
-
-                insertEmpIntoDatabase(conn, employeeId, tempEmail, empPhone, isManager, socialSecurity, empPay, empBankAccount);
-                buildEmployeeTable(conn, employeeTableModel);
+            if (tempId.isEmpty() || tempEmail.isEmpty() || tempPhone.isEmpty() || tempSSN.isEmpty() || tempPay.isEmpty() || tempBankAccount.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please fill all fields.");
+                return;
             }
+
+            int employeeId = Integer.parseInt(tempId);
+            int empPhone = Integer.parseInt(tempPhone);
+            int socialSecurity = Integer.parseInt(tempSSN);
+            double empPay = Double.parseDouble(tempPay);
+            int empBankAccount = Integer.parseInt(tempBankAccount);
+
+            insertEmpIntoDatabase(conn, employeeId, tempEmail, empPhone, isManager, socialSecurity, empPay, empBankAccount);
+            buildEmployeeTable(conn, employeeTableModel);
         });
         modifyEmployeePanel.add(addButton);
 
 
         JButton updateButton = new JButton("UPDATE");
-        updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempId = employeeIdField.getText().trim();
-                String tempEmail = emailField.getText().trim();
-                String tempPhone = phoneField.getText().trim();
-                String tempSSN = socialSecurityField.getText().trim();
-                String tempPay = payField.getText().trim();
-                String tempBankAccount = bankAccountField.getText().trim();
-                boolean isManager = isManagerCheck.isSelected();
+        updateButton.addActionListener(e -> {
+            String tempId = employeeIdField.getText().trim();
+            String tempEmail = emailField.getText().trim();
+            String tempPhone = phoneField.getText().trim();
+            String tempSSN = socialSecurityField.getText().trim();
+            String tempPay = payField.getText().trim();
+            String tempBankAccount = bankAccountField.getText().trim();
+            boolean isManager = isManagerCheck.isSelected();
 
-                if (tempId.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please enter the Employee ID.");
-                    return;
-                }
-
-                int employeeId = Integer.parseInt(tempId);
-                int empPhone = tempPhone.isEmpty() ? -1 : Integer.parseInt(tempPhone);
-                int socialSecurity = tempSSN.isEmpty() ? -1 : Integer.parseInt(tempSSN);
-                double empPay = tempPay.isEmpty() ? -1.0 : Double.parseDouble(tempPay);
-                int empBankAccount = tempBankAccount.isEmpty() ? -1 : Integer.parseInt(tempBankAccount);
-
-                updateEmpIntoDatabase(conn, employeeId, tempEmail, empPhone, isManager, socialSecurity, empPay, empBankAccount);
-                buildEmployeeTable(conn, employeeTableModel);
+            if (tempId.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please enter the Employee ID.");
+                return;
             }
+
+            int employeeId = Integer.parseInt(tempId);
+            int empPhone = tempPhone.isEmpty() ? -1 : Integer.parseInt(tempPhone);
+            int socialSecurity = tempSSN.isEmpty() ? -1 : Integer.parseInt(tempSSN);
+            double empPay = tempPay.isEmpty() ? -1.0 : Double.parseDouble(tempPay);
+            int empBankAccount = tempBankAccount.isEmpty() ? -1 : Integer.parseInt(tempBankAccount);
+
+            updateEmpIntoDatabase(conn, employeeId, tempEmail, empPhone, isManager, socialSecurity, empPay, empBankAccount);
+            buildEmployeeTable(conn, employeeTableModel);
         });
         modifyEmployeePanel.add(updateButton);
 
 
         JButton deleteButton = new JButton("DELETE");
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempId = employeeIdField.getText().trim();
-                if (tempId.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please enter the Employee ID.");
-                    return;
-                }
-
-                int employeeId = Integer.parseInt(tempId);
-                deleteEmpIntoDatabase(conn, employeeId);
-                buildEmployeeTable(conn, employeeTableModel);
+        deleteButton.addActionListener(e -> {
+            String tempId = employeeIdField.getText().trim();
+            if (tempId.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please enter the Employee ID.");
+                return;
             }
+
+            int employeeId = Integer.parseInt(tempId);
+            deleteEmpIntoDatabase(conn, employeeId);
+            buildEmployeeTable(conn, employeeTableModel);
         });
         modifyEmployeePanel.add(deleteButton);
 
@@ -930,10 +906,11 @@ public class ManagerGUI extends JPanel {
             JOptionPane.showMessageDialog(null, "Error deleting inventory item: " + e.getMessage());
         }
     }
+
     private static void buildProductPanel(Connection conn, JPanel productPanel) {
 
         DefaultTableModel productTableModel = new DefaultTableModel(
-                new String[] {"Product ID", "Product Name", "Cost", "Type"}, 0
+                new String[]{"Product ID", "Product Name", "Cost", "Type"}, 0
         );
         JTable productTable = new JTable(productTableModel);
         JScrollPane productTableScrollPane = new JScrollPane(productTable);
@@ -947,13 +924,13 @@ public class ManagerGUI extends JPanel {
 
         JPanel modifyProductsPanel = new JPanel(new GridBagLayout());
         modifyProductsPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),"Modify Products",
-                TitledBorder.LEFT,TitledBorder.TOP,
+                BorderFactory.createEtchedBorder(), "Modify Products",
+                TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
         ));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(3,3,3,3);
+        gbc.insets = new Insets(3, 3, 3, 3);
 
         modifyProductsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         // Text fields for product ID, name, cost, and type
@@ -967,139 +944,47 @@ public class ManagerGUI extends JPanel {
         JLabel prodName = new JLabel("Name:");
         JLabel prodCost = new JLabel("Product Cost:");
         JLabel prodType = new JLabel("Product Type:");
-        gbc.gridx =0;
-        gbc.gridy =0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         modifyProductsPanel.add(prodLabel, gbc);
-        gbc.gridx =1;
-        modifyProductsPanel.add(idField,gbc);
+        gbc.gridx = 1;
+        modifyProductsPanel.add(idField, gbc);
 
-        gbc.gridx =0;
-        gbc.gridy =1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         modifyProductsPanel.add(prodName, gbc);
-        gbc.gridx =1;
-        modifyProductsPanel.add(nameField,gbc);
+        gbc.gridx = 1;
+        modifyProductsPanel.add(nameField, gbc);
 
-        gbc.gridx =2;
-        gbc.gridy =0;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
         modifyProductsPanel.add(prodCost, gbc);
-        gbc.gridx =3;
-        modifyProductsPanel.add(costField,gbc);
+        gbc.gridx = 3;
+        modifyProductsPanel.add(costField, gbc);
 
-        gbc.gridx =2;
-        gbc.gridy =1;
+        gbc.gridx = 2;
+        gbc.gridy = 1;
         modifyProductsPanel.add(prodType, gbc);
-        gbc.gridx =3;
-        modifyProductsPanel.add(typeField,gbc);
-
-
-
+        gbc.gridx = 3;
+        modifyProductsPanel.add(typeField, gbc);
 
 
         JButton insertButton = new JButton("INSERT");
-        insertButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Gather values from text fields
-                String temp_id = idField.getText().trim();
-                String temp_name = nameField.getText().trim();
-                String temp_cost = costField.getText().trim();
-                String temp_type = typeField.getText().trim();
-                if (temp_id.isEmpty() || temp_name.isEmpty() || temp_cost.isEmpty() || temp_type.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please fill all fields (ID, Name, Cost, Type).");
-                    return;
-                }
-                try {
-                    int productId = Integer.parseInt(temp_id);
-                    float cost = Float.parseFloat(temp_cost);
-
-                    insertProductIntoDatabase(conn, productId, temp_name, cost, temp_type);
-                    buildProductTable(conn, productTableModel);
-
-                    idField.setText("");
-                    nameField.setText("");
-                    costField.setText("");
-                    typeField.setText("");
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null,
-                            "Product ID must be an integer and Cost must be a valid number."
-                    );
-                }
+        insertButton.addActionListener(e -> {
+            // Gather values from text fields
+            String temp_id = idField.getText().trim();
+            String temp_name = nameField.getText().trim();
+            String temp_cost = costField.getText().trim();
+            String temp_type = typeField.getText().trim();
+            if (temp_id.isEmpty() || temp_name.isEmpty() || temp_cost.isEmpty() || temp_type.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please fill all fields (ID, Name, Cost, Type).");
+                return;
             }
-        });
-        modifyProductsPanel.add(insertButton);
+            try {
+                int productId = Integer.parseInt(temp_id);
+                float cost = Float.parseFloat(temp_cost);
 
-        JButton updateButton = new JButton("UPDATE");
-        updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String temp_id = idField.getText().trim();
-                String temp_name = nameField.getText().trim();
-                String temp_cost = costField.getText().trim();
-                String temp_type = typeField.getText().trim();
-
-                // Product ID is required for update
-                if (temp_id.isEmpty()) {
-                    JOptionPane.showMessageDialog(null,
-                            "Please fill the Product ID field for update."
-                    );
-                    return;
-                }
-
-                int productId;
-                float costVal = -1; // sentinel for "no cost entered"
-                try {
-                    productId = Integer.parseInt(temp_id);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Product ID must be an integer.");
-                    return;
-                }
-
-                // If cost field is not empty, parse it
-                if (!temp_cost.isEmpty()) {
-                    try {
-                        costVal = Float.parseFloat(temp_cost);
-                    } catch (NumberFormatException ex) {
-                        JOptionPane.showMessageDialog(null, "Cost must be a valid number.");
-                        return;
-                    }
-                }
-
-                // Retrieve current DB values if fields are left blank
-                String prevName = "";
-                float prevCost = -1;
-                String prevType = "";
-                String selectQuery = "SELECT product_name, product_cost, product_type FROM product WHERE product_id = ?";
-
-                try (PreparedStatement ps = conn.prepareStatement(selectQuery)) {
-                    ps.setInt(1, productId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) {
-                            prevName = rs.getString("product_name");
-                            prevCost = rs.getFloat("product_cost");
-                            prevType = rs.getString("product_type");
-                        } else {
-                            JOptionPane.showMessageDialog(null,
-                                    "No product found with ID: " + productId
-                            );
-                            return;
-                        }
-                    }
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error fetching current product details: " + ex.getMessage()
-                    );
-                    return;
-                }
-
-                // Use previous values if the new fields are empty
-                String newName = temp_name.isEmpty() ? prevName : temp_name;
-                float newCost = (costVal == -1) ? prevCost : costVal;
-                String newType = temp_type.isEmpty() ? prevType : temp_type;
-
-                // Update the product in the database
-                updateProductIntoDatabase(conn, productId, newName, newCost, newType);
-
-                // Refresh the table
+                insertProductIntoDatabase(conn, productId, temp_name, cost, temp_type);
                 buildProductTable(conn, productTableModel);
 
                 idField.setText("");
@@ -1107,13 +992,101 @@ public class ManagerGUI extends JPanel {
                 costField.setText("");
                 typeField.setText("");
             }
+            catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null,
+                        "Product ID must be an integer and Cost must be a valid number."
+                );
+            }
+        });
+        modifyProductsPanel.add(insertButton);
+
+        JButton updateButton = new JButton("UPDATE");
+        updateButton.addActionListener(e -> {
+            String temp_id = idField.getText().trim();
+            String temp_name = nameField.getText().trim();
+            String temp_cost = costField.getText().trim();
+            String temp_type = typeField.getText().trim();
+
+            // Product ID is required for update
+            if (temp_id.isEmpty()) {
+                JOptionPane.showMessageDialog(null,
+                        "Please fill the Product ID field for update."
+                );
+                return;
+            }
+
+            int productId;
+            float costVal = -1; // sentinel for "no cost entered"
+            try {
+                productId = Integer.parseInt(temp_id);
+            }
+            catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null, "Product ID must be an integer.");
+                return;
+            }
+
+            // If cost field is not empty, parse it
+            if (!temp_cost.isEmpty()) {
+                try {
+                    costVal = Float.parseFloat(temp_cost);
+                }
+                catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Cost must be a valid number.");
+                    return;
+                }
+            }
+
+            // Retrieve current DB values if fields are left blank
+            String prevName;
+            float prevCost;
+            String prevType;
+            String selectQuery = "SELECT product_name, product_cost, product_type FROM product WHERE product_id = ?";
+
+            try (PreparedStatement ps = conn.prepareStatement(selectQuery)) {
+                ps.setInt(1, productId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        prevName = rs.getString("product_name");
+                        prevCost = rs.getFloat("product_cost");
+                        prevType = rs.getString("product_type");
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(null,
+                                "No product found with ID: " + productId
+                        );
+                        return;
+                    }
+                }
+            }
+            catch (SQLException ex) {
+                JOptionPane.showMessageDialog(null,
+                        "Error fetching current product details: " + ex.getMessage()
+                );
+                return;
+            }
+
+            // Use previous values if the new fields are empty
+            String newName = temp_name.isEmpty() ? prevName : temp_name;
+            float newCost = (costVal == -1) ? prevCost : costVal;
+            String newType = temp_type.isEmpty() ? prevType : temp_type;
+
+            // Update the product in the database
+            updateProductIntoDatabase(conn, productId, newName, newCost, newType);
+
+            // Refresh the table
+            buildProductTable(conn, productTableModel);
+
+            idField.setText("");
+            nameField.setText("");
+            costField.setText("");
+            typeField.setText("");
         });
         modifyProductsPanel.add(updateButton);
 
         JPanel modifyItemsPanel = new JPanel(new GridBagLayout());
         modifyItemsPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),"Modify Inventory",
-                TitledBorder.LEFT,TitledBorder.TOP,
+                BorderFactory.createEtchedBorder(), "Modify Inventory",
+                TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
         ));
         modifyItemsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1133,85 +1106,78 @@ public class ManagerGUI extends JPanel {
         JLabel transactionLabel = new JLabel("Transaction ID");
         //JLabel prodLabel1 = new JLabel("Product Id:");
 
-        gbc.gridx =0;
-        gbc.gridy =0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         modifyItemsPanel.add(idLabel, gbc);
-        gbc.gridx =1;
-        modifyItemsPanel.add(id,gbc);
+        gbc.gridx = 1;
+        modifyItemsPanel.add(id, gbc);
 
-        gbc.gridx =0;
-        gbc.gridy =1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         modifyItemsPanel.add(nameLabel, gbc);
-        gbc.gridx =1;
-        modifyItemsPanel.add(name,gbc);
+        gbc.gridx = 1;
+        modifyItemsPanel.add(name, gbc);
 
-        gbc.gridx =2;
-        gbc.gridy =0;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
         modifyItemsPanel.add(amountLabel, gbc);
-        gbc.gridx =3;
-        modifyItemsPanel.add(amount,gbc);
+        gbc.gridx = 3;
+        modifyItemsPanel.add(amount, gbc);
 
-        gbc.gridx =2;
-        gbc.gridy =1;
+        gbc.gridx = 2;
+        gbc.gridy = 1;
         modifyItemsPanel.add(transactionLabel, gbc);
-        gbc.gridx =3;
-        modifyItemsPanel.add(transactionId,gbc);
-
+        gbc.gridx = 3;
+        modifyItemsPanel.add(transactionId, gbc);
 
 
         JButton addButton = new JButton("INSERT");
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempId = id.getText().trim();
-                String tempName = name.getText().trim();
-                String tempAmount = amount.getText().trim();
-                String tempTransactionId = transactionId.getText().trim();
+        addButton.addActionListener(e -> {
+            String tempId = id.getText().trim();
+            String tempName = name.getText().trim();
+            String tempAmount = amount.getText().trim();
+            String tempTransactionId = transactionId.getText().trim();
 
-                if (tempId.isEmpty() || tempName.isEmpty() || tempAmount.isEmpty() || tempTransactionId.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please fill all fields (Id, Name, Amount, Transaction ID");
-                    return;
-                }
-                int numId = Integer.parseInt(tempId);
-                int numAmount = Integer.parseInt(tempAmount);
-                int numTransactionId = Integer.parseInt(tempTransactionId);
-
-
-                // should I add checks for empty and value checking ?
-
-                insertValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
-                //buildInventoryTable(conn, inventoryTableModel);
-
+            if (tempId.isEmpty() || tempName.isEmpty() || tempAmount.isEmpty() || tempTransactionId.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please fill all fields (Id, Name, Amount, Transaction ID");
+                return;
             }
+            int numId = Integer.parseInt(tempId);
+            int numAmount = Integer.parseInt(tempAmount);
+            int numTransactionId = Integer.parseInt(tempTransactionId);
+
+
+            // should I add checks for empty and value checking ?
+
+            insertValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
+            //buildInventoryTable(conn, inventoryTableModel);
+
         });
         modifyItemsPanel.add(addButton);
 
         JButton updateButton1 = new JButton("UPDATE");
-        updateButton1.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempId = id.getText().trim();
-                String tempName = name.getText().trim();
-                String tempAmount = amount.getText().trim();
-                String tempTransactionId = transactionId.getText().trim();
-                if (tempId.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please the ID field.");
-                    return;
-                }
-                int numId = Integer.parseInt(tempId);
-                int numAmount = -1;
-                int numTransactionId = -1;
-                if (!tempAmount.isEmpty()) {
-                    numAmount = Integer.parseInt(tempAmount);
-                }
-                if (!tempTransactionId.isEmpty()) {
-                    numTransactionId = Integer.parseInt(tempTransactionId);
-                }
-                // should I add checks for empty and value checking ?
-                updateValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
-                //buildInventoryTable(conn, productTableModel);
-                //buildInventoryTable(conn, inventoryTableModel);
+        updateButton1.addActionListener(e -> {
+            String tempId = id.getText().trim();
+            String tempName = name.getText().trim();
+            String tempAmount = amount.getText().trim();
+            String tempTransactionId = transactionId.getText().trim();
+            if (tempId.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please the ID field.");
+                return;
             }
+            int numId = Integer.parseInt(tempId);
+            int numAmount = -1;
+            int numTransactionId = -1;
+            if (!tempAmount.isEmpty()) {
+                numAmount = Integer.parseInt(tempAmount);
+            }
+            if (!tempTransactionId.isEmpty()) {
+                numTransactionId = Integer.parseInt(tempTransactionId);
+            }
+            // should I add checks for empty and value checking ?
+            updateValueIntoDatabase(conn, numId, tempName, numAmount, numTransactionId);
+            //buildInventoryTable(conn, productTableModel);
+            //buildInventoryTable(conn, inventoryTableModel);
         });
         modifyItemsPanel.add(updateButton1);
 
@@ -1219,8 +1185,8 @@ public class ManagerGUI extends JPanel {
         // this is the menu inventory part GAHHAHHHA
         JPanel modifyMenuInventoryPanel = new JPanel(new GridBagLayout());
         modifyMenuInventoryPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),"Modify Menu Inventory Table",
-                TitledBorder.LEFT,TitledBorder.TOP,
+                BorderFactory.createEtchedBorder(), "Modify Menu Inventory Table",
+                TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Arial", Font.BOLD, 14), Color.DARK_GRAY
         ));
         modifyMenuInventoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1234,63 +1200,57 @@ public class ManagerGUI extends JPanel {
         JTextField quantities = new JTextField(30);
         JTextField prodId1 = new JTextField(5);
 
-        gbc.gridx =0;
-        gbc.gridy =0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         modifyMenuInventoryPanel.add(headingLabel, gbc);
 
-        gbc.gridx =0;
-        gbc.gridy =1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         modifyMenuInventoryPanel.add(prodLabel1, gbc);
-        gbc.gridx =1;
+        gbc.gridx = 1;
         modifyMenuInventoryPanel.add(prodId1, gbc);
 
-        gbc.gridx =0;
-        gbc.gridy =2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         modifyMenuInventoryPanel.add(itemIdLabel, gbc);
-        gbc.gridx =1;
+        gbc.gridx = 1;
         modifyMenuInventoryPanel.add(items, gbc);
 
-        gbc.gridx =0;
-        gbc.gridy =3;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         modifyMenuInventoryPanel.add(quantityLabel, gbc);
-        gbc.gridx =1;
+        gbc.gridx = 1;
         modifyMenuInventoryPanel.add(quantities, gbc);
 
         //change here
         JButton addButtonMenu = new JButton("INSERT");
-        addButtonMenu.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tempProdId = prodId1.getText().trim();
-                String tempItems = items.getText().trim();
-                String tempQuantity = quantities.getText().trim();
+        addButtonMenu.addActionListener(e -> {
+            String tempProdId = prodId1.getText().trim();
+            String tempItems = items.getText().trim();
+            String tempQuantity = quantities.getText().trim();
 
 
-                if (tempProdId.isEmpty() || tempItems.isEmpty() || tempQuantity.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please fill all fields");
-                    return;
-                }
-
-                String [] tempItemsArray = tempItems.split(",");
-                String [] tempQuantArray = tempQuantity.split(",");
-
-                int [] itemsArray = new int[tempItemsArray.length];
-                int [] quantityArray = new int[tempQuantArray.length];
-
-                int numId = Integer.parseInt(tempProdId);
-
-                for(int i = 0 ; i < tempItemsArray.length;i++){
-                    itemsArray[i] = Integer.parseInt(tempItemsArray[i].trim());
-                    quantityArray[i] = Integer.parseInt(tempQuantArray[i].trim());
-                    insertValueIntoMenuTable(conn, numId, itemsArray[i], quantityArray[i]);
-                }
-                JOptionPane.showMessageDialog(null, "Product and its respective menu items inserted successfully!");
+            if (tempProdId.isEmpty() || tempItems.isEmpty() || tempQuantity.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please fill all fields");
+                return;
             }
+
+            String[] tempItemsArray = tempItems.split(",");
+            String[] tempQuantArray = tempQuantity.split(",");
+
+            int[] itemsArray = new int[tempItemsArray.length];
+            int[] quantityArray = new int[tempQuantArray.length];
+
+            int numId = Integer.parseInt(tempProdId);
+
+            for (int i = 0; i < tempItemsArray.length; i++) {
+                itemsArray[i] = Integer.parseInt(tempItemsArray[i].trim());
+                quantityArray[i] = Integer.parseInt(tempQuantArray[i].trim());
+                insertValueIntoMenuTable(conn, numId, itemsArray[i], quantityArray[i]);
+            }
+            JOptionPane.showMessageDialog(null, "Product and its respective menu items inserted successfully!");
         });
         modifyMenuInventoryPanel.add(addButtonMenu);
-
-
-
 
 
         productPanel.setLayout(new BorderLayout());
@@ -1326,9 +1286,10 @@ public class ManagerGUI extends JPanel {
                 String type = rs.getString("product_type");
 
                 // Add row to the table model
-                productTableModel.addRow(new String[] {id, name, cost, type});
+                productTableModel.addRow(new String[]{id, name, cost, type});
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             JOptionPane.showMessageDialog(null,
                     "Error loading product table: " + e.getMessage()
             );
@@ -1347,7 +1308,8 @@ public class ManagerGUI extends JPanel {
             ps.setString(4, type);
             ps.executeUpdate();
             JOptionPane.showMessageDialog(null, "Product inserted successfully!");
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             JOptionPane.showMessageDialog(null,
                     "Error inserting product: " + e.getMessage()
             );
@@ -1368,19 +1330,22 @@ public class ManagerGUI extends JPanel {
             int rowsUpdated = ps.executeUpdate();
             if (rowsUpdated > 0) {
                 JOptionPane.showMessageDialog(null, "Product updated successfully!");
-            } else {
+            }
+            else {
                 JOptionPane.showMessageDialog(null, "No product found with ID: " + productId);
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             JOptionPane.showMessageDialog(null,
                     "Error updating product: " + e.getMessage()
             );
         }
     }
+
     private static void buildTrackingPanel(Connection conn, JPanel trackingPanel) {
         // Create a table model for tracking data
         DefaultTableModel trackingTableModel = new DefaultTableModel(
-                new String[] {"Transaction ID", "Tracking Number", "Vendor ID", "Estimated Delivery"}, 0
+                new String[]{"Transaction ID", "Tracking Number", "Vendor ID", "Estimated Delivery"}, 0
         );
         JTable trackingTable = new JTable(trackingTableModel);
         JScrollPane trackingScrollPane = new JScrollPane(trackingTable);
@@ -1401,7 +1366,7 @@ public class ManagerGUI extends JPanel {
         String query = "SELECT transaction_id, tracking_number, vendor_id, estimated_delivery FROM company_transaction";
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
-            while(rs.next()) {
+            while (rs.next()) {
                 String tID = String.valueOf(rs.getInt("transaction_id"));
                 String tNumber = String.valueOf(rs.getInt("tracking_number"));
                 String vID = String.valueOf(rs.getInt("vendor_id"));
@@ -1409,13 +1374,15 @@ public class ManagerGUI extends JPanel {
                 String estDelivery = String.valueOf(rs.getObject("estimated_delivery"));
                 // Or simply rs.getString("estimated_delivery") if it's a text column
 
-                model.addRow(new String[] {tID, tNumber, vID, estDelivery});
+                model.addRow(new String[]{tID, tNumber, vID, estDelivery});
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error loading tracking table: " + e.getMessage());
         }
     }
-    private static void insertValueIntoMenuTable(Connection conn, int prodId, int itemId, int quantity){
+
+    private static void insertValueIntoMenuTable(Connection conn, int prodId, int itemId, int quantity) {
         {
             String insertSQL = "INSERT INTO menu_item_inventory (product_id, item_id, quantity_used) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(insertSQL)) {
@@ -1423,7 +1390,8 @@ public class ManagerGUI extends JPanel {
                 ps.setInt(2, itemId);
                 ps.setInt(3, quantity);
                 ps.executeUpdate();
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 JOptionPane.showMessageDialog(null,
                         "Error inserting product: " + e.getMessage()
                 );
@@ -1444,7 +1412,8 @@ public class ManagerGUI extends JPanel {
 
                 JOptionPane.showMessageDialog(null, "Business day over. Shutting down...");
                 System.exit(0);
-            } catch (Exception e){
+            }
+            catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "Error closing business: " + e.getMessage());
             }
         }
@@ -1493,7 +1462,8 @@ public class ManagerGUI extends JPanel {
                         .append(" (").append(rs.getInt("order_count")).append(" orders)\n");
             }
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             return "Error generating Z-Report: " + e.getMessage();
         }
 
@@ -1505,7 +1475,8 @@ public class ManagerGUI extends JPanel {
             String logQuery = "INSERT INTO business_closure_log (closure_date, closure_status) VALUES (CURRENT_TIMESTAMP, 'Closed')";
             PreparedStatement ps = conn.prepareStatement(logQuery);
             ps.executeUpdate();
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Error logging business closure: " + e.getMessage());
         }
     }
