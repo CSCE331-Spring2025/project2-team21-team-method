@@ -226,206 +226,171 @@ public class ManagerGUI extends JPanel {
         orderPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
+    /**
+     * Creates the X-Report
+     *
+     * @param conn Database connection
+     * @return JPanel containing the X-Report
+     */
     private static JPanel buildTrendsPanel(Connection conn) {
-        JPanel trendsPanel = new JPanel();
-        trendsPanel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10); // spacing
-        gbc.gridx = 0; // Column index start at 0
-        gbc.gridy = 0; // Row index start at 0
-        gbc.fill = GridBagConstraints.HORIZONTAL; // Allow horizontal stretching where needed
+        JPanel trendsPanel = new JPanel(new BorderLayout(10, 10));
+        trendsPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // stretch
-        gbc.weightx = 1;
-        gbc.weighty = 1;
+        // header contains title and refresh
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-        JTextArea weeklySales = fetchWeeklySales(conn);
-        JTextArea realisticSales = fetchRealisticSales(conn);
-        JTextArea peakSales = fetchPeakSalesDay(conn);
-        JTextArea menuInventory = fetchMenuInventory(conn);
-        JTextArea popularToppings = fetchMostPopularToppings(conn);
-        JTextArea topCustomers = fetchTopCustomers(conn);
+        JLabel titleLabel = new JLabel("X-Report: Sales");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        headerPanel.add(titleLabel, BorderLayout.WEST);
 
-        // ================================
-        // Sales Report GUI
-        // ================================
-        JTextField startDateField = new JTextField(10);
-        JTextField endDateField = new JTextField(10);
-        JButton filterButton = new JButton("Filter Sales");
+        JButton refreshButton = new JButton("Refresh Report");
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 12));
+        headerPanel.add(refreshButton, BorderLayout.EAST);
 
-        // Text area for sales data
-        JTextArea salesByDateRange = new JTextArea();
-        salesByDateRange.setEditable(false);
-        salesByDateRange.setRows(5);
+        // sales panel
+        JPanel reportPanel = new JPanel(new BorderLayout(10, 10));
 
-        // Panel for date inputs and button
-        JPanel dateFilterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        dateFilterPanel.add(new JLabel("Start Date (YYYY-MM-DD):"));
-        dateFilterPanel.add(startDateField);
-        dateFilterPanel.add(new JLabel("End Date (YYYY-MM-DD):"));
-        dateFilterPanel.add(endDateField);
-        dateFilterPanel.add(filterButton);
+        DefaultTableModel salesTableModel = new DefaultTableModel(
+                new String[]{"Hour", "Orders", "Total Sales", "Average Sale"}, 0
+        );
 
-        // Add event listener for button click
-        filterButton.addActionListener(e -> {
-            String startDate = startDateField.getText().trim();
-            String endDate = endDateField.getText().trim();
+        JTable salesTable = new JTable(salesTableModel);
 
-            if (!startDate.isEmpty() && !endDate.isEmpty()) {
-                JTextArea updatedSales = fetchSalesByDateRange(conn, startDate, endDate);
-                salesByDateRange.setText(updatedSales.getText());
-            }
-            else {
-                String message = "Please enter correct start and end dates.";
-                salesByDateRange.setText(message);
-                JOptionPane.showMessageDialog(null, message, "Invalid Input", JOptionPane.WARNING_MESSAGE);
-            } // TODO: never gets called because of the logic error before this, in the function itself.
+        // set spacing with row height
+        salesTable.setRowHeight(35);
+        salesTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        salesTable.setShowGrid(true);
+        salesTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+
+        salesTable.getColumnModel().getColumn(0).setPreferredWidth(200);  // Hour column
+        salesTable.getColumnModel().getColumn(1).setPreferredWidth(80);   // Orders column
+        salesTable.getColumnModel().getColumn(2).setPreferredWidth(100);  // Total Sales column
+        salesTable.getColumnModel().getColumn(3).setPreferredWidth(100);  // Average Sale column
+
+        JScrollPane tableScrollPane = new JScrollPane(salesTable);
+        reportPanel.add(tableScrollPane, BorderLayout.CENTER);
+
+        // Bottom summary panel for totals
+        JPanel summaryPanel = new JPanel();
+        summaryPanel.setLayout(new BoxLayout(summaryPanel, BoxLayout.Y_AXIS));
+
+        JLabel totalOrdersLabel = new JLabel("Total Orders:");
+        JLabel totalSalesLabel = new JLabel("Total Sales:");
+        JLabel averageSaleLabel = new JLabel("Average Ticket:");
+
+        totalOrdersLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        totalOrdersLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        totalSalesLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        totalSalesLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        averageSaleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        averageSaleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        summaryPanel.add(totalOrdersLabel);
+        summaryPanel.add(totalSalesLabel);
+        summaryPanel.add(averageSaleLabel);
+
+        // Populates data
+        loadXReportData(conn, salesTableModel, totalOrdersLabel, totalSalesLabel, averageSaleLabel);
+
+        // Refresh report button
+        refreshButton.addActionListener(e -> {
+            // Clear existing data before loading new data
+            salesTableModel.setRowCount(0);
+            loadXReportData(conn, salesTableModel, totalOrdersLabel, totalSalesLabel, averageSaleLabel);
         });
 
-        addSectionToPanel(trendsPanel, "Weekly Sales History", weeklySales, gbc);
-        addSectionToPanel(trendsPanel, "Realistic Sales History", realisticSales, gbc);
-        addSectionToPanel(trendsPanel, "Peak Sales Day", peakSales, gbc);
-        addSectionToPanel(trendsPanel, "Menu Item Inventory", menuInventory, gbc);
-        addSectionToPanel(trendsPanel, "Most Popular Toppings", popularToppings, gbc);
-        addSectionToPanel(trendsPanel, "Top Customers", topCustomers, gbc);
-
-        // Add date filter panel
-        gbc.gridy++;
-        gbc.gridwidth = 2; // allow two columns for date filter panel
-        trendsPanel.add(dateFilterPanel, gbc);
-
-        // Add Sales Report section
-        gbc.gridy++;
-        addSectionToPanel(trendsPanel, "Sales by Date Ranges", salesByDateRange, gbc);
+        trendsPanel.add(headerPanel, BorderLayout.NORTH);
+        trendsPanel.add(reportPanel, BorderLayout.CENTER);
+        trendsPanel.add(summaryPanel, BorderLayout.SOUTH);
 
         return trendsPanel;
     }
 
     /**
-     * Adds a section to the trends grid with headers for each section
+     * Loads hourly sales data for the current day into the table model
+     *
+     * @param conn             Database connection
+     * @param tableModel       Table model to populate
+     * @param totalOrdersLabel Label to update with total orders
+     * @param totalSalesLabel  Label to update with total sales
+     * @param averageSaleLabel Label to update with average sale
      */
-    private static void addSectionToPanel(JPanel panel, String title, JTextArea textArea, GridBagConstraints gbc) {
-        JLabel headerLabel = new JLabel(title);
-        headerLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        gbc.gridy++; // Move to the next row
-        panel.add(headerLabel, gbc);
+    private static void loadXReportData(Connection conn, DefaultTableModel tableModel,
+                                        JLabel totalOrdersLabel, JLabel totalSalesLabel, JLabel averageSaleLabel) {
+        try {
+            // need number of reports, their hour, the total revenue, and also find correct purchase date
+            String query =
+                    "SELECT CAST(DATE_PART('hour', ct.purchase_date) AS INTEGER) AS hour, " +
+                            "COUNT(ct.order_id) AS num_orders, " +
+                            "SUM(p.product_cost) AS total_revenue " +
+                            "FROM customer_transaction ct " +
+                            "JOIN product p ON ct.product_id = p.product_id " +
+                            "WHERE ct.purchase_date::DATE = CURRENT_DATE " +
+                            "GROUP BY DATE_PART('hour', ct.purchase_date) " +
+                            "ORDER BY hour";
+            // order by hour for the report to automatically just get each entry
 
-        // make scrollable but max of 5 rows displayed at once
-        textArea.setEditable(false);
-        textArea.setRows(5);
-        JScrollPane scrollPane = new JScrollPane(textArea);
+            PreparedStatement ps = conn.prepareStatement(query);
+            ResultSet rs = ps.executeQuery();
 
-        gbc.gridy++; // Move to the next row for text area
-        panel.add(scrollPane, gbc);
-    }
+            int totalOrders = 0;
+            double totalSales = 0;
 
-    private static JTextArea fetchWeeklySales(Connection conn) {
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        String query = "SELECT date_trunc('week',purchase_date) as week_start, count(order_id) as num_orders FROM customer_transaction GROUP BY week_start ORDER BY week_start";
-        try (PreparedStatement ps = conn.prepareStatement(query);
-             ResultSet rs = ps.executeQuery()) {
-            StringBuilder sb = new StringBuilder();
             while (rs.next()) {
-                sb.append("Week Start: ").append(rs.getString(1)).append(" - Orders: ").append(rs.getInt(2)).append("\n");
+                int hour = rs.getInt("hour");
+                int orderCount = rs.getInt("num_orders");
+                double salesTotal = rs.getDouble("total_revenue");
+                double avgSale = orderCount > 0 ? salesTotal / orderCount : 0;
+
+                totalOrders += orderCount;
+                totalSales += salesTotal;
+
+                String hourDisplay = formatHourDisplay(hour);
+
+                tableModel.addRow(new Object[]{
+                        hourDisplay,
+                        orderCount,
+                        String.format("$%.2f", salesTotal),
+                        String.format("$%.2f", avgSale)
+                });
             }
-            textArea.setText(sb.toString());
+
+            // Update the summary labels
+            double avgTicket = totalOrders > 0 ? totalSales / totalOrders : 0;
+            totalOrdersLabel.setText("Total Orders: " + totalOrders);
+            totalSalesLabel.setText(String.format("Total Sales: $%.2f", totalSales));
+            averageSaleLabel.setText(String.format("Average Ticket: $%.2f", avgTicket));
+
+            // Edge case: no sales, add a row that says no sales
+            if (tableModel.getRowCount() == 0) {
+                tableModel.addRow(new Object[]{"No sales recorded today", "-", "-", "-"});
+            }
+
+            rs.close();
+            ps.close();
         }
         catch (SQLException e) {
-            textArea.setText("Error loading weekly sales: " + e.getMessage());
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error loading the X-Report");
         }
-        return textArea;
     }
 
-    private static JTextArea fetchRealisticSales(Connection conn) {
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        String query = "SELECT extract('hour' from ct.purchase_date) as hour, count(order_id) as orders, sum(p.product_cost) as sales FROM customer_transaction ct JOIN product p ON ct.product_id = p.product_id GROUP BY hour ORDER BY hour";
-        try (PreparedStatement ps = conn.prepareStatement(query);
-             ResultSet rs = ps.executeQuery()) {
-            StringBuilder sb = new StringBuilder();
-            while (rs.next()) {
-                sb.append("Hour: ").append(rs.getInt(1)).append(" - Orders: ").append(rs.getInt(2)).append(" - Sales: $").append(rs.getDouble(3)).append("\n");
-            }
-            textArea.setText(sb.toString());
-        }
-        catch (SQLException e) {
-            textArea.setText("Error loading realistic sales: " + e.getMessage());
-        }
-        return textArea;
-    }
+    /**
+     * Formats an hour number into a readable time display
+     *
+     * @param hour Hour as 0-23 integer
+     * @return Formatted hour string (e.g. "9:00 AM - 10:00 AM")
+     */
+    private static String formatHourDisplay(int hour) {
+        String amPm1 = hour < 12 ? "AM" : "PM";
 
-    private static JTextArea fetchPeakSalesDay(Connection conn) {
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        String query = "SELECT date(purchase_date) as date, sum(p.product_cost) as sales FROM customer_transaction ct JOIN product p ON ct.product_id = p.product_id GROUP BY date ORDER BY sales DESC LIMIT 10";
-        try (PreparedStatement ps = conn.prepareStatement(query);
-             ResultSet rs = ps.executeQuery()) {
-            StringBuilder sb = new StringBuilder();
-            while (rs.next()) {
-                sb.append("Date: ").append(rs.getString(1)).append(" - Sales: $").append(rs.getDouble(2)).append("\n");
-            }
-            textArea.setText(sb.toString());
-        }
-        catch (SQLException e) {
-            textArea.setText("Error loading peak sales day: " + e.getMessage());
-        }
-        return textArea;
-    }
+        int displayHour1 = hour % 12;
+        if (displayHour1 == 0) displayHour1 = 12;
 
-    private static JTextArea fetchMenuInventory(Connection conn) {
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        String query = "SELECT count(*) FROM menu_item_inventory";
-        try (PreparedStatement ps = conn.prepareStatement(query);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                textArea.setText("Total Menu Items in Inventory: " + rs.getInt(1));
-            }
-            else {
-                textArea.setText("No menu inventory data available.");
-            }
-        }
-        catch (SQLException e) {
-            textArea.setText("Error loading menu inventory: " + e.getMessage());
-        }
-        return textArea;
-    }
-
-    private static JTextArea fetchMostPopularToppings(Connection conn) {
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        String query = "SELECT topping_type, COUNT(topping_type) FROM customer_transaction GROUP BY topping_type";
-        try (PreparedStatement ps = conn.prepareStatement(query);
-             ResultSet rs = ps.executeQuery()) {
-            StringBuilder sb = new StringBuilder();
-            while (rs.next()) {
-                sb.append("Topping: ").append(rs.getString(1)).append(" - Count: ").append(rs.getInt(2)).append("\n");
-            }
-            textArea.setText(sb.toString());
-        }
-        catch (SQLException e) {
-            textArea.setText("Error loading most popular toppings: " + e.getMessage());
-        }
-        return textArea;
-    }
-
-    private static JTextArea fetchTopCustomers(Connection conn) {
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        String query = "SELECT cr.customer_id, cr.points, cr.email FROM customer_reward cr ORDER BY cr.points DESC LIMIT 10";
-        try (PreparedStatement ps = conn.prepareStatement(query);
-             ResultSet rs = ps.executeQuery()) {
-            StringBuilder sb = new StringBuilder();
-            while (rs.next()) {
-                sb.append("Customer ID: ").append(rs.getInt(1)).append(" - Points: ").append(rs.getInt(2)).append(" - Email: ").append(rs.getString(3)).append("\n");
-            }
-            textArea.setText(sb.toString());
-        }
-        catch (SQLException e) {
-            textArea.setText("Error loading top customers: " + e.getMessage());
-        }
-        return textArea;
+        return String.format("%d:00 %s", displayHour1, amPm1);
     }
 
     /**
