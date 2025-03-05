@@ -193,9 +193,11 @@ public class ManagerGUI extends JPanel {
             int numAmount;
             int numTransactionId;
             if (!tempAmount.isEmpty()) {
+                // weird bug must keep
                 numAmount = Integer.parseInt(tempAmount);
             }
             if (!tempTransactionId.isEmpty()) {
+                // weird bug must keep
                 numTransactionId = Integer.parseInt(tempTransactionId);
             }
             deleteValueIntoDatabase(conn, numId);
@@ -232,14 +234,19 @@ public class ManagerGUI extends JPanel {
     }
 
     /**
-     * Creates the X-Report
-     *
-     * @param conn Database connection
-     * @return JPanel containing the X-Report
+     * This method updates the buildTrendsPanel method in ManagerGUI.java to include the sales report functionality.
+     * It adds date filter fields and sales report section.
      */
     private static JPanel buildTrendsPanel(Connection conn) {
-        JPanel trendsPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel trendsPanel = new JPanel(new GridBagLayout());
         trendsPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 5, 10, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
 
         // header contains title and refresh
         JPanel headerPanel = new JPanel(new BorderLayout());
@@ -252,6 +259,10 @@ public class ManagerGUI extends JPanel {
         JButton refreshButton = new JButton("Refresh Report");
         refreshButton.setFont(new Font("Arial", Font.BOLD, 12));
         headerPanel.add(refreshButton, BorderLayout.EAST);
+
+        gbc.gridwidth = 2;
+        trendsPanel.add(headerPanel, gbc);
+        gbc.gridy++;
 
         // sales panel
         JPanel reportPanel = new JPanel(new BorderLayout(10, 10));
@@ -276,6 +287,10 @@ public class ManagerGUI extends JPanel {
         JScrollPane tableScrollPane = new JScrollPane(salesTable);
         reportPanel.add(tableScrollPane, BorderLayout.CENTER);
 
+        gbc.gridwidth = 2;
+        trendsPanel.add(reportPanel, gbc);
+        gbc.gridy++;
+
         // Bottom summary panel for totals
         JPanel summaryPanel = new JPanel();
         summaryPanel.setLayout(new BoxLayout(summaryPanel, BoxLayout.Y_AXIS));
@@ -297,6 +312,10 @@ public class ManagerGUI extends JPanel {
         summaryPanel.add(totalSalesLabel);
         summaryPanel.add(averageSaleLabel);
 
+        gbc.gridwidth = 2;
+        trendsPanel.add(summaryPanel, gbc);
+        gbc.gridy++;
+
         // Populates data
         loadXReportData(conn, salesTableModel, totalOrdersLabel, totalSalesLabel, averageSaleLabel);
 
@@ -307,9 +326,69 @@ public class ManagerGUI extends JPanel {
             loadXReportData(conn, salesTableModel, totalOrdersLabel, totalSalesLabel, averageSaleLabel);
         });
 
-        trendsPanel.add(headerPanel, BorderLayout.NORTH);
-        trendsPanel.add(reportPanel, BorderLayout.CENTER);
-        trendsPanel.add(summaryPanel, BorderLayout.SOUTH);
+        // ================================
+        // Sales Report Section - Added from sales-report.txt
+        // ================================
+        JTextField startDateField = new JTextField(10);
+        JTextField endDateField = new JTextField(10);
+        JButton filterButton = new JButton("Filter Sales");
+
+        // Text area for sales data
+        JTextArea salesByDateRange = new JTextArea();
+        salesByDateRange.setEditable(false);
+        salesByDateRange.setRows(10);
+        salesByDateRange.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane salesScrollPane = new JScrollPane(salesByDateRange);
+
+        // Panel for date inputs and button
+        JPanel dateFilterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        dateFilterPanel.add(new JLabel("Start Date (YYYY-MM-DD):"));
+        dateFilterPanel.add(startDateField);
+        dateFilterPanel.add(new JLabel("End Date (YYYY-MM-DD):"));
+        dateFilterPanel.add(endDateField);
+        dateFilterPanel.add(filterButton);
+
+        // Add event listener for button click
+        filterButton.addActionListener(e -> {
+            String startDate = startDateField.getText().trim();
+            String endDate = endDateField.getText().trim();
+
+            if (!startDate.isEmpty() && !endDate.isEmpty()) {
+                try {
+                    // Validate date format
+                    java.sql.Date.valueOf(startDate);
+                    java.sql.Date.valueOf(endDate);
+
+                    JTextArea updatedSales = fetchSalesByDateRange(conn, startDate, endDate);
+                    salesByDateRange.setText(updatedSales.getText());
+                } catch (IllegalArgumentException ex) {
+                    String message = "Please enter valid dates in YYYY-MM-DD format.";
+                    salesByDateRange.setText(message);
+                    JOptionPane.showMessageDialog(null, message, "Invalid Input", JOptionPane.WARNING_MESSAGE);
+                }
+            } else {
+                String message = "Please enter both start and end dates.";
+                salesByDateRange.setText(message);
+                JOptionPane.showMessageDialog(null, message, "Invalid Input", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
+        // Add date filter panel
+        gbc.gridy++;
+        gbc.gridwidth = 2; // allow two columns for date filter panel
+        trendsPanel.add(dateFilterPanel, gbc);
+
+        // Add Sales Report section title
+        gbc.gridy++;
+        JLabel salesReportLabel = new JLabel("Sales by Date Range");
+        salesReportLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        trendsPanel.add(salesReportLabel, gbc);
+
+        // Add the sales report text area with scroll pane
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0; // Allow this component to expand vertically
+        trendsPanel.add(salesScrollPane, gbc);
 
         return trendsPanel;
     }

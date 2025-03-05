@@ -1,5 +1,4 @@
 import java.awt.*;
-import java.awt.event.*;
 import java.sql.*;
 import java.time.Instant;
 import javax.swing.*;
@@ -24,7 +23,7 @@ import java.util.Random;
 public class CashierGUI extends JPanel {
     static DefaultTableModel currentTransactionModel;
     static final List<TransactionData> currentTransactionList = new ArrayList<>();
-    private static HashMap<String, Integer> selectedCustomizations = new HashMap<>();
+    private static final HashMap<String, Integer> selectedCustomizations = new HashMap<>();
 
     private static int loggedInCustomerId = -1;
 
@@ -402,7 +401,6 @@ public class CashierGUI extends JPanel {
         gbc.gridx = 2;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        customizePanel.add(new JLabel("Toppings"), gbc);
 
         gbc.gridy++;
 
@@ -419,6 +417,7 @@ public class CashierGUI extends JPanel {
                 int value = entry.getValue();
 
                 if (value > 0) {
+                    selectedCustomizations.put(optionName, value);
                     orderSummary.append(optionName).append(": ").append(value).append("<br>");
                     hasCustomizations = true;
 
@@ -611,7 +610,7 @@ public class CashierGUI extends JPanel {
      * Get inventory id by name.
      *
      * @param inventoryName the name of the item in
-     * @return
+     * @return the item id
      */
     private static int getInventoryItemIdByName(String inventoryName) {
         String query = "SELECT item_id FROM inventory WHERE item_name = ?";
@@ -686,7 +685,6 @@ public class CashierGUI extends JPanel {
                 }
                 else {
                     JOptionPane.showMessageDialog(null, "Item ID: " + itemId + " not found in inventory.");
-                    continue; // skip
                 }
             }
 
