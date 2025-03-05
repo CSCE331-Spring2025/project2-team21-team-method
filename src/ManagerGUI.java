@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.sql.*;
+import java.time.LocalDate;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
@@ -321,6 +322,25 @@ public class ManagerGUI extends JPanel {
     private static void loadXReportData(Connection conn, DefaultTableModel tableModel,
                                         JLabel totalOrdersLabel, JLabel totalSalesLabel, JLabel averageSaleLabel) {
         try {
+            // getting the most recent generation of z-report/closing timestamp.
+            String closureQuery = "SELECT MAX(closure_date) FROM business_closure_log";
+            PreparedStatement closureStmt = conn.prepareStatement(closureQuery);
+            ResultSet closureRs = closureStmt.executeQuery();
+
+            Timestamp lastClosureTimestamp = null;
+
+            if (closureRs.next()) {
+                lastClosureTimestamp = closureRs.getTimestamp(1);
+            }
+
+            closureRs.close();
+            closureStmt.close();
+
+            if (lastClosureTimestamp == null) {
+                LocalDate today = LocalDate.now();
+                lastClosureTimestamp = Timestamp.valueOf(today.atStartOfDay());
+            }
+
             // need number of reports, their hour, the total revenue, and also find correct purchase date
             String query =
                     "SELECT CAST(DATE_PART('hour', ct.purchase_date) AS INTEGER) AS hour, " +
@@ -328,16 +348,20 @@ public class ManagerGUI extends JPanel {
                             "SUM(p.product_cost) AS total_revenue " +
                             "FROM customer_transaction ct " +
                             "JOIN product p ON ct.product_id = p.product_id " +
-                            "WHERE ct.purchase_date::DATE = CURRENT_DATE " +
+                            "WHERE ct.purchase_date > ? " +                          //HERE FIX
                             "GROUP BY DATE_PART('hour', ct.purchase_date) " +
                             "ORDER BY hour";
             // order by hour for the report to automatically just get each entry
 
             PreparedStatement ps = conn.prepareStatement(query);
+            ps.setTimestamp(1, lastClosureTimestamp);
+
             ResultSet rs = ps.executeQuery();
 
             int totalOrders = 0;
             double totalSales = 0;
+
+            tableModel.setRowCount(0);
 
             while (rs.next()) {
                 int hour = rs.getInt("hour");
@@ -1373,10 +1397,9 @@ public class ManagerGUI extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                resetXReport();
+                logBusinessClosure(conn);
 
                 JOptionPane.showMessageDialog(null, "Business day over. Shutting down...");
-                System.exit(0);
             }
             catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "Error closing business: " + e.getMessage());
@@ -1437,9 +1460,10 @@ public class ManagerGUI extends JPanel {
 
     private static void logBusinessClosure(Connection conn) {
         try {
-            String logQuery = "INSERT INTO business_closure_log (closure_date, closure_status) VALUES (CURRENT_TIMESTAMP, 'Closed')";
+            String logQuery = "INSERT INTO business_closure_log (closure_date) VALUES (CURRENT_TIMESTAMP)";
             PreparedStatement ps = conn.prepareStatement(logQuery);
             ps.executeUpdate();
+            ps.close();
         }
         catch (SQLException e) {
             throw new RuntimeException("Error logging business closure: " + e.getMessage());
