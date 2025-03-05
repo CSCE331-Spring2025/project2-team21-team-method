@@ -45,6 +45,10 @@ public class ManagerGUI extends JPanel {
         JPanel productPanel = new JPanel();
         tabsPane.addTab("Product Page", productPanel);
 
+        JPanel inventoryUsagePanel = buildInventoryUsagePanel(conn);
+        tabsPane.addTab("Inventory Usage", inventoryUsagePanel);
+        add(tabsPane, BorderLayout.CENTER);
+
 
         add(tabsPane, BorderLayout.CENTER);
 
@@ -1469,4 +1473,98 @@ public class ManagerGUI extends JPanel {
             throw new RuntimeException("Error logging business closure: " + e.getMessage());
         }
     }
+
+    private static JPanel buildInventoryUsagePanel(Connection conn) {
+        JPanel inventoryUsagePanel = new JPanel();
+        inventoryUsagePanel.setLayout(new BorderLayout());
+
+        DefaultTableModel inventoryUsageTableModel = new DefaultTableModel(
+                new String[]{"Item ID", "Item Name", "Total Inventory Used"}, 0
+        );
+
+        JTable inventoryUsageTable = new JTable(inventoryUsageTableModel);
+        JScrollPane inventoryUsageScrollPane = new JScrollPane(inventoryUsageTable);
+        inventoryUsageTable.setRowHeight(30);
+        inventoryUsageTable.setFont(new Font("Arial", Font.PLAIN, 12));
+        inventoryUsageTable.setForeground(Color.DARK_GRAY);
+        inventoryUsageTable.setBackground(Color.WHITE);
+        inventoryUsageTable.setGridColor(Color.DARK_GRAY);
+
+        inventoryUsageScrollPane.setPreferredSize(new Dimension(800, 500));
+
+        // UI for Date Selection
+        JPanel filterPanel = new JPanel(new FlowLayout());
+        JTextField startDateField = new JTextField(10);
+        JTextField endDateField = new JTextField(10);
+        JButton filterButton = new JButton("Filter Inventory Usage");
+
+        filterPanel.add(new JLabel("Start Date (YYYY-MM-DD):"));
+        filterPanel.add(startDateField);
+        filterPanel.add(new JLabel("End Date (YYYY-MM-DD):"));
+        filterPanel.add(endDateField);
+        filterPanel.add(filterButton);
+
+        filterButton.addActionListener(e -> {
+            String startDate = startDateField.getText().trim();
+            String endDate = endDateField.getText().trim();
+
+            if (!startDate.isEmpty() && !endDate.isEmpty()) {
+                buildInventoryUsageTable(conn, inventoryUsageTableModel, startDate, endDate);
+            } else {
+                JOptionPane.showMessageDialog(null, "Please enter both start and end dates.", "Invalid Input", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
+        inventoryUsagePanel.add(filterPanel, BorderLayout.NORTH);
+        inventoryUsagePanel.add(inventoryUsageScrollPane, BorderLayout.CENTER);
+
+        return inventoryUsagePanel;
+    }
+
+    private static void buildInventoryUsageTable(Connection conn, DefaultTableModel tableModel, String startDate, String endDate) {
+        // Clear the table before updating
+        tableModel.setRowCount(0);
+
+        // New Corrected SQL Query
+        String query = "SELECT " +
+                "    mii.item_id, " +
+                "    i.item_name, " +
+                "    SUM(mii.quantity_used * order_count) AS total_inventory_used " +
+                "FROM " +
+                "    menu_item_inventory mii " +
+                "JOIN " +
+                "    inventory i ON mii.item_id = i.item_id " +
+                "JOIN " +
+                "    (SELECT product_id, COUNT(order_id) AS order_count " +
+                "     FROM customer_transaction " +
+                "     WHERE purchase_date BETWEEN ? AND ? " +
+                "     GROUP BY product_id) ct " +
+                "ON mii.product_id = ct.product_id " +
+                "GROUP BY " +
+                "    mii.item_id, i.item_name " +
+                "ORDER BY " +
+                "    total_inventory_used DESC";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setDate(1, java.sql.Date.valueOf(startDate));
+            ps.setDate(2, java.sql.Date.valueOf(endDate));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String itemId = String.valueOf(rs.getInt("item_id"));
+                    String itemName = rs.getString("item_name");
+                    String totalUsed = String.valueOf(rs.getInt("total_inventory_used"));
+
+                    tableModel.addRow(new String[]{itemId, itemName, totalUsed});
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error loading inventory usage data: " + e.getMessage());
+        }
+    }
+
+
+
+
+
 }
