@@ -300,6 +300,7 @@ public class CashierGUI extends JPanel {
         gbc.gridy = 0;
         gbc.gridwidth = 3; // creates 3 columns?
         gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(5, 10, 5, 10); // button customization
 
         JLabel heading = new JLabel("Customize " + drink);
         heading.setFont(new Font("Arial", Font.BOLD, 18));
@@ -311,37 +312,60 @@ public class CashierGUI extends JPanel {
         ArrayList<String[]> customOptions = getCustomizeOptions();
 
         /* dynamically store custom options and map it to its text field */
-        HashMap<String, JTextField> inputFields = new HashMap<>();
+        HashMap<String, Integer> customValues = new HashMap<>();
 
         for (String[] option : customOptions) {
+            String optionName = option[0];
+            int initialAmount = 0;
+
             gbc.gridx = 0;
-            customizePanel.add(new JLabel(option[0] + " (Available: " + option[1] + ")"), gbc);
+            gbc.insets = new Insets(5, 15, 5, 15); //topping position
+            customizePanel.add(new JLabel(optionName + " (Available: " + option[1] + ")"), gbc);
+
             gbc.gridx = 1;
 
-            JTextField inputField = new JTextField(5);
-            customizePanel.add(inputField, gbc);
-            inputFields.put(option[0], inputField);
+            JLabel valueLabel = new JLabel(String.valueOf(initialAmount));
+            customizePanel.add(valueLabel, gbc);
+
+            JButton incrementButton = new JButton("+");
+            incrementButton.setMargin(new Insets(2, 2, 2, 8)); //button customization
+            incrementButton.addActionListener(e -> {
+                int currentValue = customValues.get(optionName);
+                customValues.put(optionName, currentValue + 1);
+                valueLabel.setText(String.valueOf(customValues.get(optionName)));
+            });
+
+            JButton decrementButton = new JButton("-");
+            incrementButton.setMargin(new Insets(2, 2, 2, 2)); //button customization
+            decrementButton.addActionListener(e -> {
+                int currentValue = customValues.get(optionName);
+                if (currentValue > 0) { // Prevent negative values
+                    customValues.put(optionName, currentValue - 1);
+                    valueLabel.setText(String.valueOf(customValues.get(optionName)));
+                }
+            });
+
+            customValues.put(optionName, initialAmount);
+
+            gbc.gridx = 2;
+            gbc.insets = new Insets(5, -30, 5, 5); //dec button spacing
+
+            customizePanel.add(decrementButton, gbc);
+            gbc.gridx = 3;
+            gbc.insets = new Insets(5, 5, 5, 5); //inc button spacing
+
+            customizePanel.add(incrementButton, gbc);
             gbc.gridy++;
         }
 
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 3; // Makes the buttons span the columns
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.insets = new Insets(15, 0, 0, 0);
-
-        /* Retrieving and process only non-empty string into pop-up */
-        JButton confirmButton = new JButton("Confirm Selection");
-        customizePanel.add(confirmButton, gbc);
-
-        gbc.gridx = 1;
-        addBackButton(customizePanel, "Specific Drink Selection");
-
-        // Toppings column
-        gbc.gridx = 2;
+        gbc.gridx = 5;
         gbc.gridy = 1;
+        gbc.insets = new Insets(5, 30, 5, 10); //toppings spacing
         gbc.anchor = GridBagConstraints.WEST;
-        customizePanel.add(new JLabel("Toppings"), gbc);
+        gbc.gridwidth = 1;
+        JLabel toppingsLabel = new JLabel("Toppings");
+        toppingsLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        customizePanel.add(toppingsLabel, gbc);
 
         gbc.gridy++;
         String[] toppings = {"Boba", "Aloe Vera", "Red Bean", "Popping Boba", "None"};
@@ -354,6 +378,20 @@ public class CashierGUI extends JPanel {
             gbc.gridy++;
         }
 
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3; // Makes the buttons span the columns
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(15, 0, 0, 0);
+
+        gbc.gridy += 2; //This is to help with formatting
+        /* Retrieving and process only non-empty string into pop-up */
+        JButton confirmButton = new JButton("Confirm Selection");
+        customizePanel.add(confirmButton, gbc);
+
+        gbc.gridx = 1;
+        addBackButton(customizePanel, "Specific Drink Selection");
+
         confirmButton.addActionListener(e -> {
             StringBuilder orderSummary = new StringBuilder("<html><h2>Order Placed:</h2>");
             orderSummary.append("<b>").append(currentDrink).append("</b><br>");
@@ -362,19 +400,19 @@ public class CashierGUI extends JPanel {
             double iceAmount = 0;
             String toppingType = "None";
 
-            for (Map.Entry<String, JTextField> entry : inputFields.entrySet()) {
+            for (Map.Entry<String, Integer> entry : customValues.entrySet()) {
                 String optionName = entry.getKey();
-                String value = entry.getValue().getText().trim();
+                int value = entry.getValue();
 
-                if (!value.isEmpty() && !value.equals("0")) {
+                if (value > 0) {
                     orderSummary.append(optionName).append(": ").append(value).append("<br>");
                     hasCustomizations = true;
 
                     if (optionName.toLowerCase().contains("ice")) {
-                        iceAmount = Double.parseDouble(value);
+                        iceAmount = value;
                     }
                     if (optionName.toLowerCase().contains("topping")) {
-                        toppingType = value;
+                        toppingType = String.valueOf(value);
                     }
                 }
             }
@@ -413,6 +451,7 @@ public class CashierGUI extends JPanel {
                 Timestamp purchaseDate = Timestamp.from(Instant.now());
 
                 addItemToTransaction(productId, orderId, customerId, purchaseDate, iceAmount, toppingType);
+
                 JOptionPane.showMessageDialog(null, "Your order has been placed!", "Success",
                         JOptionPane.INFORMATION_MESSAGE);
 
