@@ -5,6 +5,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * The main driver class that contains both the manager and the cashier GUIs.
+ */
 public class Sharetea {
     private static Connection conn = null;
 

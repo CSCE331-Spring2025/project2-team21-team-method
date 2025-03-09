@@ -37,6 +37,8 @@ public class CashierGUI extends JPanel {
     private static JLabel totalCostLabel;
 
     /**
+     * Creates and returns the cashier GUI as a JPanel.
+     *
      * @param conn the database connection
      */
     public CashierGUI(Connection conn) {
@@ -808,6 +810,11 @@ public class CashierGUI extends JPanel {
         return productName;
     }
 
+    /**
+     * Generates a random order id for transactions.
+     *
+     * @return the order id to assign
+     */
     private static int generateOrderId() {
         return 10000 + new Random().nextInt(90000);
     }
@@ -840,8 +847,6 @@ public class CashierGUI extends JPanel {
 
     /**
      * Creates the GUI for the Remove Button on the Transaction sidebar.
-     *
-     * @author Sebastian Chu
      */
     static class ButtonRenderer extends JButton implements TableCellRenderer {
         public ButtonRenderer() {
@@ -860,8 +865,6 @@ public class CashierGUI extends JPanel {
 
     /**
      * Creates the logic of the Remove button from the Transaction sidebar.
-     *
-     * @author Sebastian Chu
      */
     static class ButtonEditor extends DefaultCellEditor {
         private final JButton button;

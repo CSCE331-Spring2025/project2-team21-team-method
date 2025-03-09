@@ -6,6 +6,11 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
 public class ManagerGUI extends JPanel {
+
+    /**
+     * Creates and returns the manager GUI as a JPanel.
+     * @param conn the database connection
+     */
     public ManagerGUI(Connection conn) {
         //JFrame managerDashboard = new JFrame("Manager Dashboard");
         try {
@@ -489,7 +494,7 @@ public class ManagerGUI extends JPanel {
      * Formats an hour number into a readable time display
      *
      * @param hour Hour as 0-23 integer
-     * @return Formatted hour string (e.g. "9:00 AM - 10:00 AM")
+     * @return Formatted hour string (e.g. "9:00 AM")
      */
     private static String formatHourDisplay(int hour) {
         String amPm1 = hour < 12 ? "AM" : "PM";
@@ -550,6 +555,12 @@ public class ManagerGUI extends JPanel {
     }
 
 
+    /**
+     * Populates the inventory table with current inventory data from the database.
+     *
+     * @param conn the database connection
+     * @param inventoryTableModel the table model to populate with inventory data
+     */
     private static void buildInventoryTable(Connection conn, DefaultTableModel inventoryTableModel) {
         inventoryTableModel.setRowCount(0);
         String query = "SELECT item_id, item_name, amount FROM inventory order by item_id";
@@ -568,10 +579,19 @@ public class ManagerGUI extends JPanel {
             }
         }
         catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error laoding the inventory table");
+            JOptionPane.showMessageDialog(null, "Error loading the inventory table");
         }
     }
 
+    /**
+     * Inserts a new inventory item into the database.
+     *
+     * @param conn the database connection
+     * @param id the unique ID for the new inventory item
+     * @param name the name of the inventory item
+     * @param amount the quantity of the inventory item
+     * @param transactionId the associated transaction ID
+     */
     private static void insertValueIntoDatabase(Connection conn, int id, String name, int amount, int transactionId) {
         try (
                 PreparedStatement ps = conn.prepareStatement(
@@ -590,6 +610,15 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    /**
+     * Updates an existing inventory item's information in the database.
+     *
+     * @param conn the database connection
+     * @param id the ID of the inventory item to update
+     * @param name the new name for the inventory item
+     * @param amount the new quantity for the inventory item
+     * @param transactionId the new associated transaction ID
+     */
     private static void updateValueIntoDatabase(Connection conn, int id, String name, int amount, int transactionId) {
 
         String query = "SELECT  item_name,amount,transaction_id FROM inventory where item_id = ?";
@@ -641,6 +670,12 @@ public class ManagerGUI extends JPanel {
     }
 
 
+    /**
+     * Deletes an inventory item from the database.
+     *
+     * @param conn the database connection
+     * @param id the ID of the inventory item to delete
+     */
     private static void deleteValueIntoDatabase(Connection conn, int id) {
         // we need ti check if the value exists in menu_items_inventory as well adn delte form there as well
         try (
@@ -661,6 +696,12 @@ public class ManagerGUI extends JPanel {
     }
 
 
+    /**
+     * Builds the employee management panel.
+     *
+     * @param conn the database connection
+     * @param employeePanel the panel to build the employee management interface on
+     */
     private static void buildEmployeePanel(Connection conn, JPanel employeePanel) {
         DefaultTableModel employeeTableModel = new DefaultTableModel(
                 new String[]{"Employee ID", "Employee Email", "Employee Phone", "Is Manager", "Social Security", "Employee Pay", "Bank Account"}, 0
@@ -822,7 +863,12 @@ public class ManagerGUI extends JPanel {
         employeePanel.add(modifyEmployeePanel, BorderLayout.SOUTH);
     }
 
-    //modify this part
+    /**
+     * Populates the employee table with current employee data from the database.
+     *
+     * @param conn the database connection
+     * @param employeeTableModel the table model to populate with employee data
+     */
     private static void buildEmployeeTable(Connection conn, DefaultTableModel employeeTableModel) {
         employeeTableModel.setRowCount(0);
         String query = "SELECT employee_id, emp_email, emp_phone, is_manager, social_security, emp_pay, emp_bank_account FROM employee order by employee_id";
@@ -859,7 +905,18 @@ public class ManagerGUI extends JPanel {
         }
     }
 
-    //Modify this part
+    /**
+     * Inserts a new employee record into the database.
+     *
+     * @param conn the database connection
+     * @param employeeId the unique ID for the new employee
+     * @param empEmail email address
+     * @param empPhone phone number
+     * @param isManager if the employee is a manager
+     * @param socialSecurity the employee's social security number
+     * @param empPay the employee's pay rate
+     * @param empBankAccount the employee's bank account number
+     */
     private static void insertEmpIntoDatabase(Connection conn, int employeeId, String empEmail, int empPhone, boolean isManager, int socialSecurity, double empPay, int empBankAccount) {
         try (
                 PreparedStatement ps = conn.prepareStatement(
@@ -882,7 +939,18 @@ public class ManagerGUI extends JPanel {
         }
     }
 
-    //Modify this part
+    /**
+     * Updates an existing employee's information in the database.
+     *
+     * @param conn the database connection
+     * @param employeeId the ID of the employee to update
+     * @param empEmail the new email address for the employee
+     * @param empPhone the new phone number for the employee
+     * @param isManager if the employee is manager
+     * @param socialSecurity the new social security number for the employee
+     * @param empPay the new pay rate for the employee
+     * @param empBankAccount the new bank account number for the employee
+     */
     private static void updateEmpIntoDatabase(Connection conn, int employeeId, String empEmail, long empPhone, boolean isManager, int socialSecurity, double empPay, int empBankAccount) {
 
         //String query = "SELECT  item_name, amount,transaction_id FROM inventory where item_id = ?";
@@ -959,7 +1027,12 @@ public class ManagerGUI extends JPanel {
         }
     }
 
-    //modify this part
+    /**
+     * Deletes an employee record from the database.
+     *
+     * @param conn the database connection
+     * @param employeeId the ID of the employee to delete
+     */
     private static void deleteEmpIntoDatabase(Connection conn, int employeeId) {
         // we need ti check if the value exists in menu_items_inventory as well adn delte form there as well
         try (
@@ -979,6 +1052,12 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    /**
+     * Builds the product management panel.
+     *
+     * @param conn the database connection
+     * @param productPanel the panel to build the product management interface on
+     */
     private static void buildProductPanel(Connection conn, JPanel productPanel) {
 
         DefaultTableModel productTableModel = new DefaultTableModel(
@@ -1343,6 +1422,12 @@ public class ManagerGUI extends JPanel {
 
     }
 
+    /**
+     * Populates the product table with current product data from the database.
+     *
+     * @param conn the database connection
+     * @param productTableModel the table model to populate with product data
+     */
     private static void buildProductTable(Connection conn, DefaultTableModel productTableModel) {
         // Clear existing rows
         productTableModel.setRowCount(0);
@@ -1369,6 +1454,15 @@ public class ManagerGUI extends JPanel {
     }
 
 
+    /**
+     * Inserts a new product into the database.
+     *
+     * @param conn the database connection
+     * @param productId the unique ID for the new product
+     * @param name the name of the product
+     * @param cost the cost/price of the product
+     * @param type the type/category of the product
+     */
     private static void insertProductIntoDatabase(
             Connection conn, int productId, String name, float cost, String type
     ) {
@@ -1389,6 +1483,15 @@ public class ManagerGUI extends JPanel {
     }
 
 
+    /**
+     * Updates an existing product's information in the database.
+     *
+     * @param conn the database connection
+     * @param productId the ID of the product to update
+     * @param name the new name for the product
+     * @param cost the new cost/price for the product
+     * @param type the new type/category for the product
+     */
     private static void updateProductIntoDatabase(
             Connection conn, int productId, String name, float cost, String type
     ) {
@@ -1414,6 +1517,12 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    /**
+     * Builds and populates the tracking panel with shipment tracking information.
+     *
+     * @param conn the database connection
+     * @param trackingPanel the panel to build the tracking information UI on
+     */
     private static void buildTrackingPanel(Connection conn, JPanel trackingPanel) {
         // Create a table model for tracking data
         DefaultTableModel trackingTableModel = new DefaultTableModel(
@@ -1433,6 +1542,12 @@ public class ManagerGUI extends JPanel {
         trackingPanel.add(trackingScrollPane, BorderLayout.CENTER);
     }
 
+    /**
+     * Populates the tracking table with shipment data from the database.
+     *
+     * @param conn the database connection
+     * @param model the table model to populate with tracking data
+     */
     private static void buildTrackingTable(Connection conn, DefaultTableModel model) {
         model.setRowCount(0);
         String query = "SELECT transaction_id, tracking_number, vendor_id, estimated_delivery FROM company_transaction";
@@ -1454,6 +1569,14 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    /**
+     * Inserts a new product-inventory item relationship into the menu_item_inventory table.
+     *
+     * @param conn the database connection
+     * @param prodId the product ID
+     * @param itemId the inventory item ID
+     * @param quantity the quantity of the item used in the product
+     */
     private static void insertValueIntoMenuTable(Connection conn, int prodId, int itemId, int quantity) {
         {
             String insertSQL = "INSERT INTO menu_item_inventory (product_id, item_id, quantity_used) VALUES (?, ?, ?)";
@@ -1471,7 +1594,11 @@ public class ManagerGUI extends JPanel {
         }
     }
 
-    // Z-report pre-req
+    /**
+     * Generates a Z-Report with end of business day.
+     *
+     * @param conn the database connection
+     */
     private static void closeBusinessWorkflow(Connection conn) {
         String report = generateZReport(conn);
 
@@ -1490,16 +1617,28 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    /**
+     * Resets the X-Report data by clearing all current transaction information.
+     */
     private static void resetXReport() {
         clearTransactions();
     }
 
+
+    /**
+     * Clears all current transactions from the transaction list and table model.
+     */
     public static void clearTransactions() {
         CashierGUI.currentTransactionList.clear();
         CashierGUI.currentTransactionModel.setRowCount(0);
     }
 
-    /* TODO: Add more queries for more results */
+    /**
+     * Generates a Z-Report.
+     *
+     * @param conn the database connection
+     * @return the Z-Report data
+     */
     private static String generateZReport(Connection conn) {
         StringBuilder report = new StringBuilder("Z-Report - Daily Sales Summary\n");
 
@@ -1541,6 +1680,12 @@ public class ManagerGUI extends JPanel {
         return report.toString();
     }
 
+    /**
+     * Records the business closure in the database with the current timestamp.
+     *
+     * @param conn the database connection
+     * @throws RuntimeException if there is an error logging the business closure
+     */
     private static void logBusinessClosure(Connection conn) {
         try {
             String logQuery = "INSERT INTO business_closure_log (closure_date) VALUES (CURRENT_TIMESTAMP)";
@@ -1553,6 +1698,12 @@ public class ManagerGUI extends JPanel {
         }
     }
 
+    /**
+     * Builds the inventory usage panel with filtering options.
+     *
+     * @param conn the database connection
+     * @return a JPanel containing the inventory usage report interface
+     */
     private static JPanel buildInventoryUsagePanel(Connection conn) {
         JPanel inventoryUsagePanel = new JPanel();
         inventoryUsagePanel.setLayout(new BorderLayout());
@@ -1600,6 +1751,14 @@ public class ManagerGUI extends JPanel {
         return inventoryUsagePanel;
     }
 
+    /**
+     * Populates the inventory usage table with data filtered by date range.
+     *
+     * @param conn the database connection
+     * @param tableModel the table model to populate with inventory usage data
+     * @param startDate the start date for the report period (format: YYYY-MM-DD)
+     * @param endDate the end date for the report period (format: YYYY-MM-DD)
+     */
     private static void buildInventoryUsageTable(Connection conn, DefaultTableModel tableModel, String startDate, String endDate) {
         // Clear the table before updating
         tableModel.setRowCount(0);
@@ -1641,9 +1800,4 @@ public class ManagerGUI extends JPanel {
             JOptionPane.showMessageDialog(null, "Error loading inventory usage data: " + e.getMessage());
         }
     }
-
-
-
-
-
 }
