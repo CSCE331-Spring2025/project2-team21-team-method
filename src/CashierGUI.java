@@ -11,14 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-/*
-  (Phase 4):
-  Check Pinned Google Docs
- */
-
 /**
+ * Builds the Cashier GUI.
+ *
  * @author Sebastian Chu, Zian Liang
- * @version 1.0
  */
 public class CashierGUI extends JPanel {
     static DefaultTableModel currentTransactionModel;

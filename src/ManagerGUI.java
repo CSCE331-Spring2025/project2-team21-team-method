@@ -5,6 +5,9 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
+/**
+ * Builds the Manager GUI.
+ */
 public class ManagerGUI extends JPanel {
 
     /**
